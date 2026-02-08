@@ -64,3 +64,24 @@
 | 四个场景中 ≥ 3 个场景的核心选择倾向"遗忘/服从/放弃" | 少年在整个场景中感受到一种淡淡的悲伤，但说不出来源。叙述语气更沉静。山上的遗迹看起来更荒凉 |
 | 所有四个场景都完成了"杨戬/杨戬线索"的条件触发 | 少年下山时看到路边石头上坐着一条黑狗。狗看了他一眼，然后跑进了树林。很普通的事。但少年觉得那条狗的眼神很奇怪 — 不像狗 |
 | `grandmother_stories` = 4 且所有场景均完成 | 影响力报告的"重新渲染"中，祖母在讲完四个故事后会说一段额外的话："这些故事啊……我以前觉得是编的。但你知道吗，有时候我半夜醒来，会觉得这些故事比我的命还真。那些人 — 那个孩子、那个将军、那些猴子、那个和尚 — 他们比我活得更真。也许因为他们做了我不敢做的事。" |
+
+---
+
+## 派生变量说明
+
+上述重新渲染表中使用的部分变量（如 `moon_response`, `marshal_memory` 等）不是由各场景直接输出，而是基于源变量通过特定规则**派生**得出。
+
+详细派生规则见：`/Users/dnhb/Desktop/GitHub/My_Projects/jump-jump/.claude/plans/scenes/scene-0-wuzhishan/derived-variables.md`
+
+### 派生变量速查表
+
+| 派生变量 | 源变量 | 派生规则简述 |
+|----------|--------|--------------|
+| `moon_response` | `tenpeng_last_words` | 听到天蓬的话 + 选择等待/观察 → 回应 |
+| `marshal_memory` | `survival_method` | 生存方式含自我记忆 → 记得 |
+| `clerk_choice` | `ledger_choice` | 揭发 → 反抗体制 |
+| `monkey_survivors` | `monkey_unity` | 团结→存活, 分裂→部分存活, 散去→无 |
+| `huaguoshan_fire` | `peach_tree_fate` + `resistance_choice` | 砍掉 或 (反抗且不满足隐藏条件) → 全毁 |
+| `faming_faith` | `faith_state` | 直接映射：坚定→保持, 动摇→困惑, 重建→重建, 崩塌→崩塌 |
+| `scripture_truth` | `sutra_truth` | 直接映射：禅意→禅意, 政治/悖论→揭露, 不理解→隐藏 |
+| `traveler_destination` | `tangseng_encounter` + `faith_state` | 深度对话且信仰未崩塌 → 继续西行 |

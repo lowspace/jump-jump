@@ -10,8 +10,8 @@
 | `lijing_hesitation` | 高/中/低 | 李靖否认时的犹豫程度（影响力报告的叙事细节） |
 | `armguard` | 带走/留下 | 护腕物件（后续场景闪回触发 / Scene 0 废墟细节） |
 | `yangjian_triggered` | 是/否 | 杨戬是否出现（Scene 2 闪回内容） |
-| `crowd_attitude` | 敌意/中性/同情 | 百姓对哪吒的态度（影响力报告中陈塘关的集体记忆） |
-| `player_philosophy` | 冲动/坚守/回避 | B 选择反映的哲学倾向（影响力报告行为画像） |
+| `collective_memory_tone` | 敌意/中性/同情 | 陈塘关百姓对哪吒的集体记忆基调。影响报告中陈塘关的集体记忆叙事，也用于 Scene 3 和 Scene 4 的同类变量命名统一 |
+| `player_philosophy` | 冲动/坚守/回避 | B 选择反映的哲学倾向。作为 `philosophy_stance` 的基础倾向，影响 Scene 2 的闪回和检定修正 |
 
 ## 入站依赖变量
 
