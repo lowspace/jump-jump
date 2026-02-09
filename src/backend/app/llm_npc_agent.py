@@ -14,6 +14,20 @@ except ImportError:
     HAS_OPENAI = False
     print("Warning: OpenAI not installed. Run: pip install openai")
 
+# Global LLM configuration
+_llm_config = {
+    "api_key": None,
+    "base_url": None
+}
+
+def set_llm_config(api_key: str = None, base_url: str = None):
+    """Set LLM configuration programmatically"""
+    global _llm_config
+    if api_key:
+        _llm_config["api_key"] = api_key
+    if base_url:
+        _llm_config["base_url"] = base_url
+
 
 @dataclass
 class DialogueContext:
@@ -61,15 +75,16 @@ class LLMNPCAgent:
         self.state = state
         self.client = None
         if HAS_OPENAI:
-            api_key = os.getenv("OPENAI_API_KEY")
-            base_url = os.getenv("OPENAI_BASE_URL")  # 支持第三方兼容API
+            # Priority: 1. Global config, 2. Environment variables
+            api_key = _llm_config.get("api_key") or os.getenv("OPENAI_API_KEY")
+            base_url = _llm_config.get("base_url") or os.getenv("OPENAI_BASE_URL")
             if api_key:
+                client_kwargs = {"api_key": api_key}
                 if base_url:
-                    self.client = OpenAI(api_key=api_key, base_url=base_url)
-                else:
-                    self.client = OpenAI(api_key=api_key)
+                    client_kwargs["base_url"] = base_url
+                self.client = OpenAI(**client_kwargs)
             else:
-                print(f"Warning: No OPENAI_API_KEY set for {state.name}")
+                print(f"Warning: No API key set for {state.name}. Use --api-key or set OPENAI_API_KEY")
 
     def _build_system_prompt(self) -> str:
         """Build the system prompt that defines this NPC's character"""

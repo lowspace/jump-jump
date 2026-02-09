@@ -2,10 +2,15 @@
 """
 Jump Jump CLI v4 - TRUE AGENT VERSION
 NPCs understand player input and generate contextual responses
+
+Usage:
+    python -m cli.client_v4 --api-key sk-xxx
+    python -m cli.client_v4 --api-key xxx --base-url https://api.xxx.com/v1
 """
 
 import asyncio
 import sys
+import argparse
 sys.path.insert(0, '/Users/dnhb/Desktop/GitHub/My_Projects/jump-jump/src')
 
 from rich.console import Console
@@ -16,7 +21,6 @@ from rich.prompt import Prompt
 
 # Direct import to avoid backend/__init__.py loading fastapi
 import importlib.util
-import sys
 
 spec = importlib.util.spec_from_file_location(
     "llm_npc_agent",
@@ -26,6 +30,7 @@ llm_module = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(llm_module)
 create_scene_0_agents = llm_module.create_scene_0_agents
 LLMNPCAgentPool = llm_module.LLMNPCAgentPool
+set_llm_config = llm_module.set_llm_config
 
 console = Console()
 
@@ -256,6 +261,33 @@ class JumpJumpCLIV4:
 
 
 def main():
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(
+        description='Jump Jump CLI v4 - True LLM Agent',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog='''
+Examples:
+  python -m cli.client_v4 --api-key sk-xxx
+  python -m cli.client_v4 --api-key xxx --base-url https://api.xxx.com/v1
+  python -m cli.client_v4  # Uses OPENAI_API_KEY env var
+        '''
+    )
+    parser.add_argument(
+        '--api-key',
+        type=str,
+        help='OpenAI API key (or compatible)'
+    )
+    parser.add_argument(
+        '--base-url',
+        type=str,
+        help='Base URL for API (default: OpenAI official)'
+    )
+    args = parser.parse_args()
+
+    # Set LLM configuration if provided
+    if args.api_key or args.base_url:
+        set_llm_config(api_key=args.api_key, base_url=args.base_url)
+
     cli = JumpJumpCLIV4()
     try:
         asyncio.run(cli.start_game())
