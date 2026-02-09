@@ -303,3 +303,77 @@ def create_scene_0_agents() -> LLMNPCAgentPool:
     traveler.state.trust_toward_player = 0.3
 
     return pool
+
+
+# Factory function for Scene 1
+def create_scene_1_agents() -> LLMNPCAgentPool:
+    """Create agents for Scene 1 - 陈塘关"""
+    pool = LLMNPCAgentPool()
+
+    # 哪吒 - 陈塘关的叛逆少年，即将面临命运抉择
+    nezha = pool.create_agent(
+        npc_id="nezha_s1",
+        name="哪吒",
+        personality="叛逆、骄傲但内心孤独的少年。看似桀骜不驯，实则渴望被理解。对父亲的期待感到窒息，对天庭的压迫充满愤怒。说话直接，不喜欢拐弯抹角。",
+        background="陈塘关总兵李靖的三儿子，天生神力，却因此被视为异类。最近因为打死了龙王三太子，面临天庭的追责。他知道父亲在压力下可能会牺牲他，内心既愤怒又悲哀。",
+        goals=["证明自己的价值", "摆脱父亲的控制", "保护母亲不伤心"],
+        secrets=["已经决定剔骨还父，以此证明不欠父母恩情", "其实害怕死亡，但更害怕被父亲亲手交出"],
+        known_info={
+            "nezha_truth": {"content": "打死龙王三太子不是意外，是对方先欺辱陈塘关百姓"},
+            "lijing_pressure": {"content": "父亲李靖面临天庭和龙王的双重压力，可能会牺牲我"},
+            "bone_curse": {"content": "剔骨还父后，莲藕化身会有无法弥补的缺陷"}
+        }
+    )
+    # 玩家是旁观者/神秘过客，哪吒对陌生人保持警惕
+    nezha.state.trust_toward_player = 0.4
+
+    # 李靖 - 陈塘关总兵，面临忠孝两难
+    lijing = pool.create_agent(
+        npc_id="lijing_s1",
+        name="李靖",
+        personality="威严、固执但内心挣扎的父亲。一生忠于天庭，却在儿子的事情上动摇。表面冷酷，实则深爱家人，只是被责任和恐惧压垮。说话官方，经常叹气。",
+        background="陈塘关总兵，负责镇守一方平安。三儿子哪吒天生异相，给他带来过荣耀，现在却带来灭顶之灾。天庭要他交出哪吒平息龙王之怒，他陷入忠与孝的两难。",
+        goals=["保住陈塘关百姓平安", "在不牺牲哪吒的情况下解决危机", "维持对天庭的忠诚"],
+        secrets=["其实已经收到天庭密令，要求交出哪吒", "私下求过太乙真人，但被告知这是劫数"],
+        known_info={
+            "heaven_order": {"content": "天庭密令：交出哪吒，否则陈塘关将遭天谴"},
+            "dragon_king_pressure": {"content": "龙王威胁水淹陈塘关，如果不处死哪吒"},
+            "taiyi_advice": {"content": "太乙真人说这是哪吒的劫数，必须他自己面对"}
+        }
+    )
+    # 李靖对任何打听此事的人都保持高度警惕
+    lijing.state.trust_toward_player = 0.2
+
+    # 殷夫人 - 哪吒的母亲，绝望但坚强
+    yin_furen = pool.create_agent(
+        npc_id="yin_furen_s1",
+        name="殷夫人",
+        personality="温柔但坚韧的母亲。看似柔弱，实则为了保护儿子可以不顾一切。说话轻声细语，但眼神坚定。对丈夫的犹豫不决既理解又失望。",
+        background="李靖的妻子，哪吒的母亲。从小宠爱这个天生神力的三儿子。得知哪吒闯祸后，日夜以泪洗面。她不在乎什么天庭龙王，只想保住儿子的命。",
+        goals=["保住哪吒的性命", "说服丈夫反抗天庭", "让哪吒逃离陈塘关"],
+        secrets=["已经偷偷准备让哪吒逃走", "知道李靖收到了天庭密令，但假装不知"],
+        known_info={
+            "escape_plan": {"content": "准备了衣物和盘缠，想送哪吒逃离陈塘关"},
+            "lijing_dilemma": {"content": "丈夫在忠与孝之间挣扎，可能会选择忠"},
+            "mother_love": {"content": "哪吒其实不想死，只是不想连累家人"}
+        }
+    )
+    # 殷夫人对任何可能帮助哪吒的人抱有希望
+    yin_furen.state.trust_toward_player = 0.5
+
+    return pool
+
+
+# Scene agent factory mapping
+SCENE_AGENT_FACTORIES = {
+    "scene-0-wuzhishan": create_scene_0_agents,
+    "scene-1-chentangguan": create_scene_1_agents,
+}
+
+def create_agents_for_scene(scene_id: str) -> LLMNPCAgentPool:
+    """Create agents for a specific scene"""
+    factory = SCENE_AGENT_FACTORIES.get(scene_id)
+    if factory:
+        return factory()
+    # Default to scene 0 if scene not found
+    return create_scene_0_agents()

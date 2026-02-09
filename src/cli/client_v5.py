@@ -25,6 +25,7 @@ spec_agent = importlib.util.spec_from_file_location(
 llm_module = importlib.util.module_from_spec(spec_agent)
 spec_agent.loader.exec_module(llm_module)
 create_scene_0_agents = llm_module.create_scene_0_agents
+create_agents_for_scene = llm_module.create_agents_for_scene
 set_llm_config = llm_module.set_llm_config
 
 spec_flow = importlib.util.spec_from_file_location(
@@ -41,26 +42,59 @@ console = Console()
 class JumpJumpGame:
     """完整的Jump Jump游戏"""
 
+    # 场景NPC配置
+    SCENE_NPCS = {
+        "scene-0-wuzhishan": [
+            ("grandmother_s0", "祖母", "家人，信任度高"),
+            ("traveler_s0", "行者", "神秘过客"),
+        ],
+        "scene-1-chentangguan": [
+            ("nezha_s1", "哪吒", "叛逆少年，面临抉择"),
+            ("lijing_s1", "李靖", "陈塘关总兵，忠孝两难"),
+            ("yin_furen_s1", "殷夫人", "哪吒母亲，绝望但坚强"),
+        ],
+    }
+
+    # 场景观察文本
+    SCENE_OBSERVATIONS = {
+        "scene-0-wuzhishan": [
+            "烧焦的桃树残根在风中摇晃，根部隐约有新芽——那是大圣种下的树，还在等待。",
+            "岩壁上的刻痕已经风化，但'齐天大圣'四个字的轮廓依稀可辨。",
+            "山风带来一丝焦糊味，那是五百年前大闹天宫留下的痕迹。",
+            "岩缝中的金属碎片在阳光下闪烁，边缘异常锋利，不知是哪场战斗的遗物。",
+        ],
+        "scene-1-chentangguan": [
+            "陈塘关的城墙高耸，但守军的脸上写满忧虑。",
+            "东海方向乌云密布，龙王的威胁如同悬在头顶的利剑。",
+            "总兵府门前聚集着焦急的百姓，他们不知道灾难即将降临。",
+            "哪吒的房间里传来器物破碎的声音，夹杂着压抑的抽泣。",
+        ],
+    }
+
     def __init__(self):
         self.agent_pool = None
         self.flow_manager = None
         self.current_scene_info = None
+        self.current_scene_id = None
 
     async def start(self):
         """开始游戏"""
         self._show_title()
 
         # 初始化
-        console.print("[dim]初始化NPC Agents...[/dim]")
-        self.agent_pool = create_scene_0_agents()
-        console.print("[green]✓ Agents已激活[/green]")
-
         console.print("[dim]加载游戏流程...[/dim]")
         self.flow_manager = GameFlowManager()
-        console.print("[green]✓ 游戏流程已加载[/green]\n")
+        console.print("[green]✓ 游戏流程已加载[/green]")
 
         # 开始场景0
-        self.current_scene_info = self.flow_manager.start_scene("scene-0-wuzhishan")
+        self.current_scene_id = "scene-0-wuzhishan"
+        self.current_scene_info = self.flow_manager.start_scene(self.current_scene_id)
+
+        # 加载场景对应的NPC
+        console.print("[dim]初始化NPC Agents...[/dim]")
+        self.agent_pool = create_agents_for_scene(self.current_scene_id)
+        console.print(f"[green]✓ Agents已激活: {self.current_scene_info['name']}[/green]\n")
+
         self._show_scene_intro()
 
         # 游戏主循环
@@ -124,28 +158,37 @@ class JumpJumpGame:
         """探索阶段 - 自由对话"""
         console.print("\n[bold cyan]探索阶段[/bold cyan]")
 
+        # 获取当前场景的NPC列表
+        npc_list = self.SCENE_NPCS.get(self.current_scene_id, [])
+
         # 显示可用行动
         console.print("\n[bold]选择行动:[/bold]")
-        console.print("  [1] 与祖母对话 (家人，信任度高)")
-        console.print("  [2] 与行者对话 (神秘过客)")
-        console.print("  [3] 观察环境")
-        console.print("  [4] 使用洞察力")
-        console.print("  [5] 查看已收集信息")
+
+        # 动态显示NPC选项
+        choices = []
+        for i, (npc_id, npc_name, npc_desc) in enumerate(npc_list, 1):
+            console.print(f"  [{i}] 与{npc_name}对话 ({npc_desc})")
+            choices.append(str(i))
+
+        console.print(f"  [{len(npc_list) + 1}] 观察环境")
+        console.print(f"  [{len(npc_list) + 2}] 使用洞察力")
+        console.print(f"  [{len(npc_list) + 3}] 查看已收集信息")
         console.print("  [q] 退出游戏")
 
-        choice = Prompt.ask("选择", choices=["1", "2", "3", "4", "5", "q"])
+        choices.extend([str(len(npc_list) + 1), str(len(npc_list) + 2), str(len(npc_list) + 3), "q"])
+        choice = Prompt.ask("选择", choices=choices)
 
         if choice == "q":
             raise KeyboardInterrupt
-        elif choice == "1":
-            await self._talk_to_npc("grandmother_s0", "祖母")
-        elif choice == "2":
-            await self._talk_to_npc("traveler_s0", "行者")
-        elif choice == "3":
+        elif choice in [str(i) for i in range(1, len(npc_list) + 1)]:
+            idx = int(choice) - 1
+            npc_id, npc_name, _ = npc_list[idx]
+            await self._talk_to_npc(npc_id, npc_name)
+        elif choice == str(len(npc_list) + 1):
             await self._observe()
-        elif choice == "4":
+        elif choice == str(len(npc_list) + 2):
             await self._use_insight()
-        elif choice == "5":
+        elif choice == str(len(npc_list) + 3):
             self._show_collected_info()
 
     async def _talk_to_npc(self, npc_id: str, npc_name: str):
@@ -221,12 +264,10 @@ class JumpJumpGame:
         """观察环境"""
         console.print("\n[dim]你仔细观察周围环境...[/dim]")
 
-        observations = [
-            "烧焦的桃树残根在风中摇晃，根部隐约有新芽——那是大圣种下的树，还在等待。",
-            "岩壁上的刻痕已经风化，但'齐天大圣'四个字的轮廓依稀可辨。",
-            "山风带来一丝焦糊味，那是五百年前大闹天宫留下的痕迹。",
-            "岩缝中的金属碎片在阳光下闪烁，边缘异常锋利，不知是哪场战斗的遗物。",
-        ]
+        # 获取当前场景的观察文本
+        observations = self.SCENE_OBSERVATIONS.get(self.current_scene_id, [
+            "周围一片寂静，似乎有什么东西在暗处注视着你。"
+        ])
 
         import random
         obs = random.choice(observations)
@@ -234,7 +275,7 @@ class JumpJumpGame:
 
         # 可能获得观察信息
         if random.random() < 0.3:
-            info_id = "environment_observation"
+            info_id = f"environment_observation_{self.current_scene_id}"
             if info_id not in self.flow_manager.state["collected_info"]:
                 self.flow_manager.state["collected_info"].append(info_id)
                 console.print("[green]✓ 记录了环境线索[/green]")
@@ -254,9 +295,12 @@ class JumpJumpGame:
 
         choice = Prompt.ask("选择", choices=["1", "2", "q"])
 
+        # 获取当前场景的NPC列表
+        npc_list = self.SCENE_NPCS.get(self.current_scene_id, [])
+
         if choice == "1":
             console.print("\n[bold]NPC真实内心:[/bold]")
-            for npc_id in ["grandmother_s0", "traveler_s0"]:
+            for npc_id, npc_name, _ in npc_list:
                 agent = self.agent_pool.get_agent(npc_id)
                 if agent:
                     console.print(f"\n[cyan]{agent.state.name}:[/cyan]")
@@ -270,12 +314,20 @@ class JumpJumpGame:
             console.print("\n[magenta]【洞察】[/magenta]")
             console.print("[dim]你静下心来，感知周围的微妙信息...[/dim]")
 
-            # 可能触发洞察事件
-            insights = [
-                "你注意到祖母时不时望向山体深处，眼中闪过担忧。",
-                "行者似乎在躲避什么，他的目光总是扫向天空。",
-                "岩壁上的某块石头看起来不自然，似乎被人动过。",
-            ]
+            # 场景特定的洞察文本
+            scene_insights = {
+                "scene-0-wuzhishan": [
+                    "你注意到祖母时不时望向山体深处，眼中闪过担忧。",
+                    "行者似乎在躲避什么，他的目光总是扫向天空。",
+                    "岩壁上的某块石头看起来不自然，似乎被人动过。",
+                ],
+                "scene-1-chentangguan": [
+                    "哪吒眼中藏着绝望，他在强装坚强。",
+                    "李靖独自站在城墙上，背影佝偻，似乎一夜苍老。",
+                    "殷夫人偷偷抹泪，却在你看过来时强颜欢笑。",
+                ],
+            }
+            insights = scene_insights.get(self.current_scene_id, ["似乎有什么重要的事情即将发生..."])
             import random
             console.print(f"\n[italic]{random.choice(insights)}[/italic]")
 
@@ -299,15 +351,17 @@ class JumpJumpGame:
 
     def _get_info_content(self, info_id: str) -> str:
         """获取信息内容"""
-        # 从所有agent的known_info中查找
-        for npc_id in ["grandmother_s0", "traveler_s0"]:
+        # 从当前场景所有agent的known_info中查找
+        npc_list = self.SCENE_NPCS.get(self.current_scene_id, [])
+        for npc_id, _, _ in npc_list:
             agent = self.agent_pool.get_agent(npc_id)
             if agent and info_id in agent.state.known_info:
                 return agent.state.known_info[info_id].get("content", info_id)
 
         # 默认返回
         info_map = {
-            "environment_observation": "环境观察记录",
+            "environment_observation_scene-0-wuzhishan": "五指山环境观察记录",
+            "environment_observation_scene-1-chentangguan": "陈塘关环境观察记录",
             "family_bond": "与家人的羁绊",
             "burden_of_knowledge": "知识的重担",
             "curiosity": "好奇心",
@@ -388,7 +442,15 @@ class JumpJumpGame:
         )
 
         if continue_game == "y":
+            # 更新当前场景ID并重新加载NPC
+            self.current_scene_id = next_scene
             self.current_scene_info = self.flow_manager.start_scene(next_scene)
+
+            # 重新加载新场景的NPC
+            console.print(f"[dim]加载新场景NPC...[/dim]")
+            self.agent_pool = create_agents_for_scene(self.current_scene_id)
+            console.print(f"[green]✓ {self.current_scene_info['name']} 的角色已激活[/green]\n")
+
             self._show_scene_intro()
             return True
         else:
