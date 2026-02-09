@@ -1,0 +1,210 @@
+# NPC Dialogue Configuration: Nezha (Scene 1 - Chentangguan)
+# Source: /claude/plans/scenes/scene-1-chentangguan/npcs/nezha.md
+
+npc_id: nezha_s1
+name: 哪吒
+scene: scene-1-chentangguan
+description: 肉球中出生的第三子，人类阶段（剔骨还父之前）
+
+initial_state:
+  trust: 0  # 0-5 scale, affects knife choice and hidden intent
+  emotional_state: guarded  # guarded, open, defiant, resigned
+  awareness_of_fate: partial  # none, partial, full
+
+# Hidden intent - NEVER exposed to other NPCs, only via insight system
+hidden_intent:
+  core: "渴望被阻止，渴望被证明有人在乎"
+  surface_mask: "愤怒、挑衅、拒绝示弱"
+  insight_reveal_text: "哪吒内心其实渴望被阻止。他的愤怒是恐惧的盔甲。"
+
+dialogue_nodes:
+  # Phase 1: Daily Training Opening
+  - node_id: S1_nezha_opening_p1
+    trigger: phase_1_start
+    phase: 1
+    text: "周师傅，你说我打得过龙吗？"
+    context: "哪吒练完拳后罕见地没立刻走，坐在台阶上盯着自己的手"
+    player_options:
+      - id: p1_tactical
+        text: "龙在水里你打不过，上岸你有机会。"
+        effect: trust_change_0
+        next_node: S1_nezha_p1_tactical_response
+        insight_hint: "哪吒问的不是战术问题"
+      - id: p1_emotional
+        text: "不管打不打得过，师傅在。"
+        skill_check: persuasion_DC10
+        success_effect: trust_plus_2
+        success_next: S1_nezha_p1_touched
+        failure_effect: nezha_silent_exit
+        hidden: "哪吒不习惯被关心，本能回避"
+      - id: p1_counter_question
+        text: "你怕打不过，还是怕打过了之后的事？"
+        prerequisite: insight_success_DC12
+        effect: trust_plus_1
+        next_node: S1_nezha_p1_reveals_fear
+        hidden: "哪吒会沉默很久，然后说：'都怕。'"
+        insight_reveal: "哪吒知道龙宫会来报复"
+      - id: p1_silent
+        text: "（沉默，陪他坐着）"
+        effect: trust_plus_1
+        next_node: S1_nezha_p1_silence_shared
+        hidden: "哪吒不会说什么，但他没有走"
+
+  - node_id: S1_nezha_p1_tactical_response
+    text: "嗯。"
+    context: "哪吒满意但没有打开心防"
+    next_node: END_PHASE_1
+
+  - node_id: S1_nezha_p1_touched
+    text: "..."
+    context: "哪吒低头看着自己的手，很久没说话"
+    effect: unlock_later_dialogue_option
+    next_node: END_PHASE_1
+
+  - node_id: S1_nezha_p1_reveals_fear
+    text: "都怕。"
+    context: "沉默很久后的回答"
+    effect: unlock_info_dragon_retaliation
+    next_node: END_PHASE_1
+
+  - node_id: S1_nezha_p1_silence_shared
+    text: "师傅教我的那把刀，我一直带着。"
+    context: "过了很久，哪吒主动开口"
+    effect: trust_plus_1
+    hidden: "这是他在间接告诉你：你给他的东西，他在乎"
+    next_node: END_PHASE_1
+
+  # Phase 2: Decision A - At the Reef
+  - node_id: S1_nezha_A1_opening
+    trigger: decision_A1
+    phase: 2
+    text: "周师傅，你来干什么？"
+    context: "城外礁石，海边，风很大，哪吒握着混天绫"
+    player_options:
+      - id: A1a_persuade_return
+        text: "回去吧。你爹在想办法。"
+        skill_check: persuasion_DC13
+        success_effect: trust_plus_0
+        success_next: S1_nezha_A1_returns
+        failure_effect: trust_minus_0
+        failure_next: S1_nezha_A1_defiant
+        insight_reveal: "哪吒内心其实渴望被阻止"
+      - id: A1b_urge_escape
+        text: "带上你的东西，走。"
+        effect: trust_minus_1
+        condition: "if trust >= 3, no penalty and追加: '你不是这个意思，我知道'"
+        next_node: S1_nezha_A1_disappointed
+        hidden: "哪吒的眼神里有失望——你也觉得是我的错？"
+      - id: A1c_silent_sit
+        text: "（在他旁边坐下）"
+        effect: trust_plus_1
+        next_node: S1_nezha_A1_shares_knife
+        hidden: "哪吒在间接告诉你他在乎你的教导"
+
+  - node_id: S1_nezha_A1_returns
+    text: "..."
+    context: "沉默片刻，跟你回城"
+    effect: route_alpha_unlocked
+    hidden: "他的表情变得更冷——他已经猜到'想办法'是什么意思"
+    next_node: END_DECISION_A
+
+  - node_id: S1_nezha_A1_defiant
+    text: "他什么时候为我想过办法？"
+    context: "哪吒不动"
+    player_options:
+      - id: retry_persuade
+        text: "（继续尝试说服）"
+        skill_check: persuasion_DC13
+      - id: change_strategy
+        text: "（改变策略）"
+        next_node: S1_nezha_A1_opening
+
+  - node_id: S1_nezha_A1_disappointed
+    text: "我跑了，陈塘关怎么办？城里的人怎么办？...你也觉得是我的错？"
+    context: "哪吒转过头看你，眼神里是失望"
+    next_node: END_DECISION_A
+
+  - node_id: S1_nezha_A1_shares_knife
+    text: "师傅教我的那把刀，我一直带着。"
+    context: "沉默很久后"
+    effect: trust_plus_1
+    hidden: "这是他在间接告诉你：你给他的东西，他在乎"
+    next_node: END_DECISION_A
+
+  # Phase 3: Denial - At the City Wall
+  - node_id: S1_nezha_p3_denial_witness
+    trigger: phase_3_denial
+    phase: 3
+    text: ""
+    context: "哪吒站在人群中，听到李靖否认"
+    conditional_text:
+      - condition: "trust >= 2 AND player_present"
+        text: "哪吒的目光扫过人群，在武师方向停留了一瞬。然后他走向城楼。"
+        effect: emotional_connection_acknowledged
+      - condition: "trust < 2 OR player_absent"
+        text: "哪吒的目光只盯着李靖。他独自走向城楼。周围没有任何他在乎的人。"
+    next_node: END_PHASE_3
+
+  # Phase 4: Bone Removal
+  - node_id: S1_nezha_p4_bone_removal
+    trigger: phase_4_bone
+    phase: 4
+    text: "你说我不是你儿子。好。骨是你的，肉是你的。我还给你。"
+    context: "城楼下，哪吒面对李靖"
+    note: "双刀抉择由系统根据trust+D20判定，非玩家直接选择"
+    conditional_outcome:
+      - condition: "knife_choice = 父刀"
+        text: "哪吒拔出李靖赠的制式军刀。'还你的骨，用你的刀。'"
+        effect: memory_residue_weak
+        hidden: "彻底清算血缘，与李靖关系归零，武师被排除"
+      - condition: "knife_choice = 师刀"
+        text: "哪吒拔出武师教的短刀，刀柄磨得发亮。"
+        effect: memory_residue_strong
+        hidden: "信任这把刀完成最重要的事——武师给他的东西参与了他的自毁"
+    next_node: END_PHASE_4
+
+  # Phase 5: Final Moments
+  - node_id: S1_nezha_p5_final_glance
+    trigger: phase_5_final
+    phase: 5
+    text: ""
+    context: "剔骨进行中，哪吒的最后反应"
+    conditional_text:
+      - condition: "player_chose_B1_stop"
+        text: "哪吒看到了你。他没有停手，但他的眼睛不再只盯着李靖了。在最后一块骨头落地之前，他朝你的方向看了一眼。那一眼里有你读不懂的东西——可能是感谢，可能是道歉，也可能只是在确认：有一个人在看着我。"
+        effect: wushi_presence_high
+      - condition: "player_chose_B2_watch"
+        text: "哪吒的手很稳。你教的。你突然很后悔教得这么好。"
+        effect: wushi_presence_medium
+      - condition: "player_chose_B3_leave"
+        text: "你没有回头。但你听到了声音。"
+        effect: wushi_presence_low
+    next_node: END_SCENE
+
+# Insight triggers for this NPC
+insight_opportunities:
+  - location: S1_nezha_A1_opening
+    type: dialogue_pre
+    cost: 1_real_purpose
+    reveals: "哪吒内心其实渴望被阻止。他的愤怒是恐惧的盔甲。"
+  - location: S1_nezha_p1_opening
+    type: dialogue_mid
+    cost: 1_real_purpose
+    reveals: "哪吒问'打得过龙吗'的真正意思是：'我做了那件事之后，还有人站在我这边吗？'"
+
+# Variable effects summary
+variable_effects:
+  nezha_trust:
+    - action: "phase_1_emotional_success"
+      change: +2
+    - action: "phase_1_counter_question"
+      change: +1
+    - action: "phase_1_silent"
+      change: +1
+    - action: "A1c_silent_sit"
+      change: +1
+    - action: "A1b_urge_escape_with_low_trust"
+      change: -1
+  knife_choice:
+    - condition: "trust_based_d20_check"
+      options: [父刀, 师刀]

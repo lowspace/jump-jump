@@ -1,0 +1,61 @@
+# Decision Flow: Scene 3 - Decision D (石卵的去留)
+# Source: /claude/plans/scenes/scene-3-huaguoshan/decisions/decision-d.md
+
+decision_id: S3_Decision_D
+decision_name: 石卵的去留
+decision_type: micro_decision
+scene: scene-3-huaguoshan
+phase: 6
+phase_name: 结局
+
+context: |
+  一切结束后。石卵站在花果山的山腰，看着远方。
+  老猴走过来，拍了拍他的肩：「石卵。你还年轻。下山去吧。山下能活。」
+
+choices:
+  - id: D1_stay
+    label: 留在花果山
+    narrative: "石卵成为花果山最后的守护者之一。"
+    effect: resistance_choice_stay
+    variable_impact: resistance_choice = 留守
+    hidden: |
+      他没有法力，没有武功。
+      但他会擦宝座上的灰，会给桃树（如果还在）浇水，会在天兵来的时候躲起来，天兵走了再出来。
+      他在等。等什么他自己也不知道。
+
+  - id: D2_leave
+    label: 下山
+    narrative: "石卵混入人间。"
+    effect: resistance_choice_hide
+    variable_impact: resistance_choice = 隐匿
+    hidden: |
+      他是一只普通的猴子，在人间的山林里生活。
+      他不反抗，也不投降。他只是……活着。
+      但他的口袋里可能揣着一根桃木棍，或者耳朵上还别着一朵枯花。
+
+  - id: D3_find_king
+    label: 去找大王
+    narrative: "石卵决定去五指山。"
+    effect: resistance_choice_resist
+    variable_impact: resistance_choice = 反抗
+    hidden: |
+      他不知道路，不知道要走多久，不知道到了能做什么。
+      一只普通猴子去看被压在山下的齐天大圣——能做什么呢？
+      也许什么都做不了。也许只是坐在五指山旁边，陪他。
+    ultimate_ripple:
+      condition: "peach_tree_fate = 移植 AND player_suggests_wuzhishan"
+      effect: "石卵带着桃树去五指山。这是P6的终极涟漪。"
+      scene0_impact: "少年看到活着的桃树"
+      impact_report: "悟空旁边多了一棵桃树"
+    insight_opportunity:
+      cost: 1_real_purpose
+      reveals: "去找大王是最危险的选择，但如果带着桃树去，这是P6原则的极致体现"
+
+# Variable effects
+variable_effects:
+  resistance_choice:
+    - D1: 留守
+    - D2: 隐匿
+    - D3: 反抗
+  ultimate_ripple:
+    - D3_with_transplant_to_wuzhishan: "P6终极涟漪触发"

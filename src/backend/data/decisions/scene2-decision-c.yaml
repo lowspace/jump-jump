@@ -1,0 +1,47 @@
+# Decision Flow: Scene 2 - Decision C (回去的路上)
+# Source: /claude/plans/scenes/scene-2-tianhe/decisions/decision-c.md
+
+decision_id: S2_Decision_C
+decision_name: 回去的路上
+decision_type: micro_decision
+scene: scene-2-tianhe
+phase: 4
+phase_name: 余波
+
+context: |
+  阶段四触发。天蓬被贬后，人群散去。
+  你在天河边走回核算司的路上，注意到天河岸边有一样东西——
+  一片碎甲。天蓬的甲胄在仙力被抽离时碎裂了，这是飘落下来的一片。
+  它就在你脚边。一片指甲盖大小的玄色金属，边缘还残留着微弱的灵蕴光泽。
+
+choices:
+  - id: C_pick_up
+    label: 捡起来
+    narrative: "你把碎甲放进了口袋。"
+    effect: tenpeng_fragment_true
+    variable_impact: tenpeng_fragment = 碎甲
+    echo_preview: |
+      这片碎甲成为你和天蓬事件的物理联结。
+      在后续场景中，当你面对「体制 vs 个人」的选择时，它会在你口袋里发出微弱的温度。
+      它也可能成为卷帘大将追查你的证据。
+    survival_method_tendency: 有牵绊
+    insight_opportunity:
+      cost: 1_real_purpose
+      reveals: "这片碎甲将成为跨场景的物理联结，影响后续选择"
+
+  - id: C_leave_it
+    label: 不捡
+    narrative: "你看了它一眼，继续走了。"
+    effect: tenpeng_fragment_false
+    variable_impact: tenpeng_fragment = 无
+    echo_preview: "碎甲被天河水冲走。你和天蓬的故事没有物理交集。"
+    survival_method_tendency: 干净
+
+# Variable effects
+variable_effects:
+  tenpeng_fragment:
+    - C_pick_up: 碎甲
+    - C_leave_it: 无
+  survival_method:
+    - C_pick_up: 有牵绊
+    - C_leave_it: 干净

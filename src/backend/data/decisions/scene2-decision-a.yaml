@@ -1,0 +1,140 @@
+# Decision Flow: Scene 2 - Decision A (你的第一步行动)
+# Source: /claude/plans/scenes/scene-2-tianhe/decisions/decision-a.md
+
+decision_id: S2_Decision_A
+decision_name: 你的第一步行动
+scene: scene-2-tianhe
+phase: 2
+phase_name: 发现
+
+context: |
+  阶段二触发。这是本场景的第一个核心分支。每个选择消耗1回合。
+  陆执发现了灵蕴账目异常。
+
+choices:
+  - id: A1_report_xuanming
+    label: 向宣明主管汇报异常
+    description: 走进宣明的内间
+    duration: 1_turn
+    npcs_involved: [xuanming]
+    location: 宣明内间
+    sub_choices:
+      - id: A1a_direct_report
+        label: 如实汇报账目异常
+        text: "主管，西域通道的灵蕴流水有异常。有大笔灵蕴标注'灵山转'，没有走正常审批……"
+        skill_check: persuasion_DC14
+        success:
+          narrative: |
+            宣明沉默了很久。然后他站起来，走到你身边，压低声音：
+            "你以为我不知道？我早就看到了。"
+            他的手按在你肩上，力度很大：
+            "但现在不是说这个的时候。天蓬的事把所有人的注意力都吸过去了。
+            你想在这个时候翻出灵蕴的事？你是觉得自己命太长了？"
+          effect: xuanming_confesses_knowledge, lingshan_secret_medium
+          hidden: "确认宣明知情但选择沉默，获得关键信息：这件事上面有人知道"
+        failure:
+          narrative: "宣明打断你：'数字的事回去再查。现在天蓬的事搞得上面人仰马翻，你别给我添乱。'"
+          effect: xuanming_remembers_player
+          hidden: "你的汇报行为被宣明记住了，后续可能把你推出去当替罪羊"
+        insight_opportunity:
+          cost: 1_real_purpose
+          reveals: "宣明看到陆执进来时表情一闪而过的紧张——他已经知道账目有问题"
+      - id: A1b_probe
+        label: 试探性地问
+        text: "主管，最近的账目……有些地方我拿不准，想请教一下。"
+        skill_check: deception_DC11
+        success:
+          narrative: "宣明没有警觉，随口说：'什么地方？'"
+          effect: xuanming_unsuspecting
+          follow_up_check: insight_DC12
+          follow_up_success: "从他的微表情中确认——他知道这些数字是什么，他一直在假装不知道"
+        failure:
+          narrative: "宣明盯着你看了两秒：'你是不是看到什么了？'空气凝固。"
+          effect: xuanming_suspicious
+          player_options:
+            - id: admit
+              text: "承认"
+              next_node: A1a_direct_report
+            - id: deny
+              text: "否认"
+              skill_check: deception_DC13
+
+  - id: A2_investigate_alone
+    label: 不汇报，自己继续查
+    description: 回到座位，决定利用职务之便调阅更多资料
+    duration: 1_turn
+    risk: "调阅权限外的资料可能触发安全系统的监控记录"
+    skill_check: investigation_DC13
+    success:
+      narrative: |
+        你用自己的权限调出了天河防务储备账户的历史流水。
+        你发现这个账户在三年前突然被创建，而三年前正是天庭和灵山签署「联合除妖协定」的时间。
+        灵蕴转账可能就是这个协议的一部分，但规模远超公开承诺。
+      effect: lingshan_secret_high
+    failure:
+      narrative: "你的调阅请求被系统记录了。一个小时后，卷帘大将的副官出现在灵蕴核算司门口，'例行检查'。"
+      effect: juanlian_suspicion_plus2
+
+  - id: A3_pretend_not_seen
+    label: 合上账本，假装没看到
+    description: 把账本放回架子，开始处理下一份常规账目
+    duration: 1_turn
+    narrative: |
+      你在数字里找到了一种熟悉的安全感。加减乘除。对了就是对了，错了就是错了。没有灰色地带。
+      但那串数字还在你脑子里。
+    gm_description: |
+      "你发现你无法集中注意力。每算到一个数字，你的手就会停一下——
+      不是因为算错了，而是因为你突然想起那个'灵山转'。
+      你在问自己：你真的能当没看到吗？其他人可以。但你不确定你能。"
+    effect: seventh_aperture_faint_awakening
+    variable_impact: seventh_aperture_awareness = 微弱觉醒
+    hidden: "陆执开始意识到自己和其他同僚不一样，但还不知道为什么"
+
+  - id: A4_tianhe_breath
+    label: 去天河边透气
+    description: 找个借口离开办公间，走到核算司后面的天河岸边
+    duration: 1_turn
+    location: 天河岸边
+    narrative: |
+      天河的水在你面前流过，银白色的，永远平静。
+      但今天你注意到一个以前没注意过的细节——天河水面下有暗流。
+      表面平静，但水体深处有大量灵蕴在流动。
+    skill_check: insight_DC13
+    success:
+      narrative: |
+        你看清了。灵蕴在天河水底被分流了。有一条暗道从天河主河道分出去，向西延伸。
+        西方——灵山的方向。这条暗道是人为开凿的，开口被伪装成天然的河底岩缝。
+      effect: lingshan_secret_high, physical_evidence_clue
+    failure:
+      narrative: "你只看到了天河。很美。很平静。你觉得也许是自己多想了。"
+    conditional_echo:
+      - condition: "yangjian_triggered = true"
+        narrative: |
+          你站在天河边，风吹过来。你忽然脑海中浮现一句话——
+          "有心窍的人活着更难"。你不知道这话从何而来。
+          你的「不安感」在这一瞬间变得格外清晰。
+        effect: scene2_insight_plus1
+      - condition: "scene1_philosophy = 冲动"
+        narrative: "脑海中闪过一个画面——一个人影毫不犹豫地冲向某个方向。那股冲劲让你心里的不安变得尖锐。"
+        effect: stage3_expose_plus1
+      - condition: "scene1_philosophy = 坚守"
+        narrative: "感觉到一种奇怪的既视感——有人在风中站着不动，不走。让你觉得安心。"
+        effect: stage4_stay_plus1
+      - condition: "scene1_philosophy = 回避"
+        narrative: "后背发凉。你转过身——没有人。但你忽然觉得，有人在你背后看着你。那种感觉说不上是威胁，更像是……遗憾。"
+        effect: stage5_leave_colder_tone
+
+# Variable effects
+variable_effects:
+  lingshan_secret:
+    - A1a_success: 中等
+    - A2_success: 高
+    - A4_success: 高
+  juanlian_suspicion:
+    - A2_failure: +2
+  seventh_aperture_awareness:
+    - A3: 微弱觉醒
+  scene2_bonuses:
+    - yangjian_triggered: "所有洞察检定+1"
+    - scene1_philosophy_冲动: "阶段三揭发+1"
+    - scene1_philosophy_坚守: "阶段四留守+1"

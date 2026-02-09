@@ -1,0 +1,103 @@
+# NPC Dialogue Configuration: Xuanming (Scene 2 - Tianhe)
+# Source: /claude/plans/scenes/scene-2-tianhe/npcs/xuanming.md
+
+npc_id: xuanming_s2
+name: 宣明
+scene: scene-2-tianhe
+description: 灵蕴部中层主管，陆执的直属上司
+
+initial_state:
+  attitude: bureaucratic_avoidant
+  knowledge_of_anomaly: full  # He knows about the anomaly
+  pressure_level: medium
+
+# Hidden intent
+hidden_intent:
+  core: "维持部门运转、不出事"
+  surface_mask: "关心下属、经验丰富的前辈"
+  insight_reveal_text: "宣明的第一反应不是'查清真相'，而是'这会不会影响我的部门考核'。"
+
+dialogue_nodes:
+  # Phase 2: Reporting the Anomaly
+  - node_id: S2_xuanming_report
+    trigger: decision_A1
+    phase: 2
+    text: "什么事？"
+    context: "宣明坐在桌后，看到陆执进来时表情一闪而过的紧张"
+    player_options:
+      - id: A1a_direct_report
+        text: "主管，西域通道的灵蕴流水有异常。有大笔灵蕴标注'灵山转'，没有走正常审批..."
+        skill_check: persuasion_DC14
+        success_effect: xuanming_confesses_knowledge, lingshan_secret_medium
+        success_next: S2_xuanming_warns
+        failure_effect: xuanming_dismisses, remembered_for_later
+        failure_next: S2_xuanming_brushes_off
+      - id: A1b_probe
+        text: "主管，最近的账目...有些地方我拿不准，想请教一下。"
+        skill_check: deception_DC11
+        success_effect: xuanming_unsuspecting
+        success_next: S2_xuanming_casual
+        failure_effect: xuanming_suspicious
+        failure_next: S2_xuanming_confronts
+
+  - node_id: S2_xuanming_warns
+    text: "你以为我不知道？我早就看到了。但现在不是说这个的时候。天蓬的事把所有人的注意力都吸过去了。你想在这个时候翻出灵蕴的事？你是觉得自己命太长了？"
+    context: "宣明压低声音，手按在陆执肩上，力度很大"
+    effect: lingshan_secret_medium
+    hidden: "确认宣明知情但选择沉默，获得关键信息：这件事上面有人知道"
+    next_node: END_XUANMING_SCENE
+
+  - node_id: S2_xuanming_brushes_off
+    text: "数字的事回去再查。现在天蓬的事搞得上面人仰马翻，你别给我添乱。"
+    context: "被打发走"
+    effect: remembered_for_later  # May scapegoat player later
+    next_node: END_XUANMING_SCENE
+
+  - node_id: S2_xuanming_casual
+    text: "什么地方？"
+    context: "宣明随口问"
+    player_options:
+      - id: present_as_confusion
+        text: "（以业务困惑方式提出异常数据）"
+        skill_check: insight_DC12
+        success_effect: confirm_xuanming_knows
+        success_next: S2_xuanming_confirms_by_expression
+        next_node: END_XUANMING_SCENE
+
+  - node_id: S2_xuanming_confirms_by_expression
+    text: "..."
+    context: "从他的微表情中确认——他知道这些数字是什么，他一直在假装不知道"
+    effect: confirm_xuanming_knows
+    next_node: END_XUANMING_SCENE
+
+  - node_id: S2_xuanming_confronts
+    text: "你是不是看到什么了？"
+    context: "空气凝固"
+    player_options:
+      - id: admit
+        text: "是的，我看到了。"
+        next_node: S2_xuanming_warns
+      - id: deny
+        text: "没有，我只是业务不熟悉。"
+        skill_check: deception_DC13
+        next_node: END_XUANMING_SCENE
+
+# Insight triggers
+insight_opportunities:
+  - location: S2_xuanming_report
+    type: dialogue_pre
+    cost: 1_real_purpose
+    reveals: "宣明看到陆执进来时表情一闪而过的紧张——他已经知道账目有问题。"
+  - location: S2_xuanming_warns
+    type: dialogue_mid
+    cost: 1_behind_dialogue
+    reveals: "幕后：宣明的第一反应不是'查清真相'，而是'这会不会影响我的部门考核'。"
+
+# Variable effects
+variable_effects:
+  lingshan_secret:
+    - action: "A1a_success"
+      value: medium
+  xuanming_attitude:
+    - action: "direct_report_failure"
+      value: suspicious

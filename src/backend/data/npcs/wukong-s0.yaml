@@ -1,0 +1,89 @@
+# NPC Configuration: Wukong (Scene 0 - Wuzhishan)
+# Source: /claude/plans/scenes/scene-0-wuzhishan/npcs/wukong.md
+
+npc_id: wukong_s0
+name: 悟空（山下存在）
+scene: scene-0-wuzhishan
+description: 被压在五指山下，弥漫在整个场景中的气氛
+
+initial_state:
+  consciousness: uncertain  # uncertain, semi_awake, fragmented
+  memory_clarity: fading  # May have forgotten who he is
+  awareness_of_player: none  # Doesn't know someone is on the mountain
+
+# Core constraint
+core_constraint: "悟空在整个场景中绝不清晰说话。最多是一声含混的、无法辨识的低吟。"
+
+# Presence mechanics
+presence_mechanics:
+  - type: physical_phenomena
+    description: "山体微震、石缝热气、大地的叹息"
+    trigger: random_or_conditional
+  - type: sound
+    description: "极其模糊的、无法辨识的低吟"
+    condition: "very rare, only under specific circumstances"
+  - type: environmental_response
+    description: "对玩家的某些行为可能有极其微弱的反应"
+    condition: "DC 17 luck check for C4 option"
+
+# Hidden intent
+hidden_intent:
+  core: "不确定。可能清醒，可能半梦半醒，可能已经遗忘了自己是谁。"
+  surface_manifestation: "山体微震、石缝热气"
+  insight_reveal_text: "五指山的佛法封印不仅压住了他的身体，也在缓慢侵蚀他的记忆。"
+
+# Interaction nodes (non-dialogue)
+interaction_nodes:
+  - node_id: S0_wukong_presence_p1
+    trigger: phase_1_exploration
+    phase: 1
+    manifestation: "烧焦的桃树残根、岩壁字迹、金属碎片"
+    note: "悟空的痕迹，不是直接出场"
+
+  - node_id: S0_wukong_presence_p2
+    trigger: phase_2_mountain_voice
+    phase: 2
+    manifestation: "山体深处的低频声响，像极其缓慢的呼吸"
+    player_options:
+      - id: listen
+        text: "贴耳去听"
+        skill_check: perception_DC16
+        success_effect: "听到极其模糊的声音，确定山下有活物"
+        success_hidden: "wukong_awareness = 意识到"
+      - id: speak_to_crack
+        text: "对着石缝说话"
+        skill_check: luck_DC15
+        success_effect: "石缝里冒出的热气节奏似乎变了一下"
+        success_hidden: "wukong_awareness = 隐约感觉"
+
+  - node_id: S0_wukong_presence_p3
+    trigger: phase_3_final_act_C4
+    phase: 3
+    manifestation: "可能的极其微弱回应"
+    condition: "player_chose_C4_speak_to_mountain AND luck_DC17_success"
+    effect: "极其微弱的震动，轻到也许是错觉"
+    hidden: "玩家选择相信那不是错觉"
+
+# Insight triggers
+insight_opportunities:
+  - location: S0_wukong_presence_p2
+    type: exploration_pre
+    cost: 1_real_purpose
+    reveals: "五指山的佛法封印不仅压住了悟空的身体，也在缓慢侵蚀他的记忆。"
+  - location: S0_wukong_presence_p3
+    type: exploration_mid
+    cost: 1_behind_dialogue
+    reveals: "幕后：少年不知道山下有人，悟空不知道山上有人。两个不知道彼此存在的生命，隔着一座山呼吸。"
+
+# Variable effects
+variable_effects:
+  wukong_awareness:
+    - action: "perception_DC16_success"
+      value: 意识到
+    - action: "perception_DC11-15"
+      value: 隐约感觉
+    - action: "failure"
+      value: 完全不知道
+  final_act:
+    - action: "C4_luck_DC17_success"
+      value: "山可能有回应"

@@ -1,0 +1,114 @@
+# NPC Dialogue Configuration: Jianyuan (Scene 4 - Lingtai)
+# Source: /claude/plans/scenes/scene-4-lingtai/npcs/jianyuan.md
+
+npc_id: jianyuan_s4
+name: 监院
+scene: scene-4-lingtai
+description: 寺院管理者，灵山体系中层执行者
+
+initial_state:
+  knowledge_of_truth: full_policy  # Knows as policy, not secret
+  attitude_to_player: disciplinary  # Sees questions as discipline issues
+  threat_response: escalate  # Will escalate from warning to expulsion
+
+# Hidden intent
+hidden_intent:
+  core: "真诚地相信自己在做对的事——信仰就是服从"
+  surface_mask: "制度回应、训诫、处分"
+  insight_reveal_text: "监院不是反派。他的每一句话都出自真心，这才是最可怕的。"
+
+dialogue_nodes:
+  # Phase 3: Confrontation
+  - node_id: S4_jianyuan_confrontation
+    trigger: decision_B1
+    phase: 3
+    text: "我说过了，那是净经。佛祖以心传法，不立文字。你看到空白，是你的心不够静。"
+    context: "监院的第一层回应"
+    player_options:
+      - id: persist_question
+        text: "那为什么净经也要编号？也要送往东土？空白的经卷给凡人看，他们能看到什么？"
+        next_node: S4_jianyuan_second_level
+
+  - node_id: S4_jianyuan_second_level
+    text: "法明。你是来抄经的，不是来解经的。经文的含义由佛祖定，经文的传播由灵山定。你要做的，只是把字抄对。如果底本上没有字，那就是佛祖的意思——这一卷不需要字。你抄你的有字经，不要管没字的经。"
+    context: "监院放下笔，正式看向法明"
+    player_options:
+      - id: appeal_to_faith
+        text: "我抄经是因为信佛。如果经是空的，我的信还有根基吗？"
+        skill_check: persuasion_DC16
+        success_effect: jianyuan_silent_long
+        failure_effect: jianyuan_counter_faith
+        insight_reveal: "诉诸信仰会让监院反驳：'信仰不需要根基。需要根基的，那叫交易。'"
+      - id: appeal_to_logic
+        text: "灵山花了大量人力物力准备取经的经卷，其中三分之一是空白的——这不合理。"
+        skill_check: persuasion_DC14
+        success_effect: jianyuan_hesitates_brief
+        failure_effect: jianyuan_returns_to_script
+      - id: appeal_to_emotion
+        text: "监院，我只是想理解。我在这里抄了三年，我觉得我至少有权理解自己在做什么。"
+        skill_check: persuasion_DC12
+        success_effect: jianyuan_sympathizes_brief
+        failure_effect: jianyuan_warns
+
+  - node_id: S4_jianyuan_silent_long
+    text: "..."
+    context: "监院沉默了很长时间"
+    conditional_outcome:
+      - condition: "success_by_5plus"
+        text: "法明，你的问题……不是没有道理。但这不是你该问的。也不是我能答的。"
+        effect: jianyuan_attitude_hesitant
+      - condition: "normal_success"
+        text: "你的信心需要磨炼。我给你三天假，去后山打坐。三天后回来继续抄经。不要再想这件事了。"
+        effect: jianyuan_attitude_disciplined, three_days_freedom
+
+  - node_id: S4_jianyuan_counter_faith
+    text: "信仰不需要根基。需要根基的，那叫交易。"
+    effect: jianyuan_attitude_warning
+    next_node: END_CONFRONTATION
+
+  - node_id: S4_jianyuan_hesitates_brief
+    text: "..."
+    context: "监院犹豫片刻，但随即回到标准话术"
+    effect: jianyuan_attitude_disciplined
+    next_node: END_CONFRONTATION
+
+  - node_id: S4_jianyuan_sympathizes_brief
+    text: "..."
+    context: "监院短暂地、真诚地同情法明"
+    effect: jianyuan_attitude_disciplined, three_days_freedom
+    next_node: END_CONFRONTATION
+
+  - node_id: S4_jianyuan_warns
+    text: "法明，我最后说一次：你的职责是抄经。如果你连这一点都做不到，我会向上面申请把你调走。"
+    effect: jianyuan_attitude_warning
+    conditional_outcome:
+      - condition: "catastrophic_failure"
+        text: "你的信力已经动摇了。一个信力动摇的人不适合抄经。从今天起你不用来抄经房了。去伙房帮忙吧。"
+        effect: player_expelled_from_sutra_room
+    next_node: END_CONFRONTATION
+
+# Insight triggers
+insight_opportunities:
+  - location: S4_jianyuan_confrontation
+    type: dialogue_pre
+    cost: 1_real_purpose
+    reveals: "监院知道无字真经。在他的层级，这不是秘密，而是政策。"
+  - location: S4_jianyuan_second_level
+    type: dialogue_mid
+    cost: 1_behind_dialogue
+    reveals: "幕后：监院真诚地相信自己在做对的事。两种信仰的碰撞——法明的信仰需要理解，监院的信仰需要服从。"
+
+# Variable effects
+variable_effects:
+  jianyuan_attitude:
+    - action: "persuasion_great_success"
+      value: hesitant
+    - action: "persuasion_success"
+      value: disciplined
+    - action: "persuasion_failure"
+      value: warning
+    - action: "catastrophic_failure"
+      value: punitive
+  monastery_fate:
+    - action: "expelled"
+      value: expelled_to_kitchen

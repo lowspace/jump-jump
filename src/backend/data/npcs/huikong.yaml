@@ -1,0 +1,97 @@
+# NPC Dialogue Configuration: Huikong (Scene 4 - Lingtai)
+# Source: /claude/plans/scenes/scene-4-lingtai/npcs/huikong.md
+
+npc_id: huikong_s4
+name: 慧空
+scene: scene-4-lingtai
+description: 资深抄经僧，在抄经房做了三十余年
+
+initial_state:
+  knowledge_of_truth: full  # Discovered blank sutras 15 years ago
+  attitude_to_truth: accepted  # "Copying itself is my practice"
+  attitude_to_player: mentoring  # Sees himself in Faming
+
+# Hidden intent
+hidden_intent:
+  core: "发现真相后经历了漫长的崩塌与重建，选择继续抄经"
+  surface_mask: "平静、过来人的克制"
+  insight_reveal_text: "慧空羡慕法明的震惊，因为震惊意味着还有信仰可以被动摇。"
+
+dialogue_nodes:
+  # Phase 2: Discovery
+  - node_id: S4_huikong_discovery
+    trigger: player_seeks_huikong
+    phase: 2
+    text: "..."
+    context: "慧空在抄经，玩家发现空白经卷后找他"
+    conditional_response:
+      - condition: "huikong_relationship = understanding_or_tacit"
+        text: "你想去问监院？别去。问了也是白问。他会告诉你'信力不足'。我问过。"
+        effect: reveals_back_sutra_location, shares_15_years_intelligence
+        next_node: S4_huikong_shares_location
+      - condition: "huikong_relationship = honest"
+        text: "你要去就去。但做好准备——他不会给你答案。"
+        effect: no_help_but_no_block
+        next_node: S4_huikong_neutral
+      - condition: "huikong_relationship = tense"
+        text: "你的事不要扯上我。"
+        effect: huikong_distant
+        player_options:
+          - id: notice_hint
+            text: "（察觉他犹豫了一下）"
+            effect: catches_hint_about_monastery_schedule
+            next_node: S4_huikong_hint_received
+
+  - node_id: S4_huikong_shares_location
+    text: "后山经库的位置和监院的巡查时间——他用了十五年掌握的情报，一次性给了法明。"
+    effect: unlock_back_sutra_location, huikong_relationship_plus
+    next_node: END_HUIKONG_SCENE
+
+  - node_id: S4_huikong_neutral
+    text: "慧空不会阻止也不会帮助。"
+    next_node: END_HUIKONG_SCENE
+
+  - node_id: S4_huikong_hint_received
+    text: "监院午时会去后山。"
+    context: "这是暗示"
+    effect: unlock_monastery_schedule_info
+    next_node: END_HUIKONG_SCENE
+
+  # Phase 3: Core Line
+  - node_id: S4_huikong_core_line
+    trigger: player_persists
+    phase: 3
+    text: "你以为我没发现过吗？"
+    context: "全场只说一次，声音很轻"
+    note: "这句话是慧空唯一一次直接提及自己的发现"
+    effect: huikong_core_line_spoken
+    hidden: "慧空十五年前就发现了无字真经"
+    next_node: S4_huikong_philosophy
+
+  - node_id: S4_huikong_philosophy
+    text: "抄经这个动作本身就是我的修行。经上写的什么，甚至经上有没有字，不影响我的修行。"
+    context: "慧空的哲学"
+    effect: philosophy_revealed
+    next_node: END_HUIKONG_SCENE
+
+# Insight triggers
+insight_opportunities:
+  - location: S4_huikong_discovery
+    type: dialogue_pre
+    cost: 1_real_purpose
+    reveals: "慧空十五年前就发现了无字真经。他选择继续抄，当作什么都没发生。"
+  - location: S4_huikong_core_line
+    type: dialogue_mid
+    cost: 1_behind_dialogue
+    reveals: "幕后：慧空羡慕法明的震惊，因为震惊意味着还有信仰可以被动摇。"
+
+# Variable effects
+variable_effects:
+  huikong_relationship:
+    - action: "accept_help"
+      value: understanding
+    - action: "reject_help"
+      value: tense
+  sutra_truth:
+    - action: "huikong_philosophy_revealed"
+      value: influenced_by_huikong

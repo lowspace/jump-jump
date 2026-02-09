@@ -1,0 +1,59 @@
+# Decision Flow: Scene 3 - Decision C (齐天大圣的名号)
+# Source: /claude/plans/scenes/scene-3-huaguoshan/decisions/decision-c.md
+
+decision_id: S3_Decision_C
+decision_name: 齐天大圣的名号
+decision_type: micro_decision
+scene: scene-3-huaguoshan
+phase: 6
+phase_name: 记忆
+
+context: |
+  天兵走后的那天晚上。猴群——不管还剩几只——围在一起。没有人说话。幼猴已经睡了。
+  老猴开口：「以后不要再提'齐天大圣'了。那四个字——天兵听到了就是死罪。」
+  铁头（如果还在且没受重伤）：「你让我忘了大王？」
+  老猴：「我没让你忘。我让你不要说出来。记在心里和说出来是两回事。」
+
+choices:
+  - id: C1_agree_hidden
+    label: 支持老猴
+    text: "老猴哥说得对。记在心里就行了。"
+    narrative: "老猴强调区别：'我没让你忘。我让你不要说出来。'"
+    effect: memory_kept_secret_transmission
+    variable_impact: memory_kept = 暗中传承
+    hidden: "齐天大圣的名号从此成为花果山幸存猴群的暗语——不说出口，但所有猴子都记得。这个记忆会像种子一样传下去。"
+
+  - id: C2_insist_spoken
+    label: 支持铁头
+    text: "不。那个名字不能只放在心里。得有人记得，得有人说。"
+    narrative: "铁头得到支持。"
+    effect: memory_kept_spoken
+    variable_impact: memory_kept = 铭记
+    hidden: "猴群中有一部分猴子会继续传颂齐天大圣的故事——冒着危险，但从未断绝。"
+
+  - id: C3_propose_code
+    label: 提出暗号
+    text: "也许……换一种方式记。不用那四个字，用别的。用桃子、用山、用水帘洞的声音来记。"
+    narrative: "老猴和铁头都思考这个提议。"
+    effect: memory_kept_code_system
+    variable_impact: memory_kept = 暗中传承（变体）
+    hidden: "猴群发明了自己的暗号系统——用花果山的事物替代'齐天大圣'。'桃子熟了'=有人还记得大王。'水帘洞还在流'=我们还在。"
+
+  - id: C4_silent
+    label: 不表态，沉默
+    narrative: "你保持沉默。"
+    effect: memory_kept_by_power_balance
+    variable_impact: memory_kept = 由力量对比决定
+    hidden: "如果铁头仍在且未受重创 → 铭记。如果铁头离开或重伤 → 遗忘。"
+
+# Variable effects
+variable_effects:
+  memory_kept:
+    - C1: 暗中传承
+    - C2: 铭记
+    - C3: 暗中传承（变体）
+    - C4: 由力量对比决定
+  scene0_echo:
+    - C2_or_C4_with_tietou: "石壁字迹更清晰"
+  scene4_echo:
+    - C2_or_C4_with_tietou: "法明听到名号心跳闪回"

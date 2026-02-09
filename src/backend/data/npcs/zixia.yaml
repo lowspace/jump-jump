@@ -1,0 +1,74 @@
+# NPC Dialogue Configuration: Zixia (Scene 3 - Huaguoshan)
+# Source: /claude/plans/scenes/scene-3-huaguoshan/npcs/zixia.md
+
+npc_id: zixia_s3
+name: 紫霞仙子
+trigger_type: conditional
+scene: scene-3-huaguoshan
+description: 来找痕迹的人，条件触发NPC
+
+trigger_conditions:
+  - "阶段三特定条件触发"
+  - "玩家探索了特定区域"
+
+trigger_logic: OR
+
+initial_state:
+  knowledge: "悟空不见了，不知道被压五指山"
+  emotional_state: searching_hopeful
+
+# Hidden intent
+hidden_intent:
+  core: "寻找悟空的任何痕迹，一个'他还在'的证据"
+  surface_mask: "风尘仆仆的旅人"
+  insight_reveal_text: "紫霞不知道悟空被压在五指山下。她只知道悟空不见了。"
+
+dialogue_nodes:
+  - node_id: S3_zixia_encounter
+    trigger: condition_met
+    phase: 3
+    text: "他还好吗？"
+    context: "她以一个'不像猴子也不像天兵'的女子形象出现，风尘仆仆的旅人"
+    note: "她只会问这一个问题"
+    player_options:
+      - id: tell_truth
+        text: "（告诉她关于大王的事——山被毁了、猴子散了、他被压住了）"
+        effect: zixia_silence, zixia_knows_truth
+        next_node: S3_zixia_thanks
+      - id: partial_truth
+        text: "（间接回答）"
+        effect: zixia_partial_understanding
+        next_node: S3_zixia_thanks
+      - id: silent_company
+        text: "（沉默陪伴）"
+        effect: zixia_comforted
+        next_node: S3_zixia_thanks
+
+  - node_id: S3_zixia_thanks
+    text: "谢谢你。"
+    context: "紫霞安静下来，安静很久，然后道谢"
+    note: "她不会哭，不会崩溃，只是安静下来"
+    effect: zixia_encounter_recorded
+    echo_foreshadowing: "石卵会知道，有一个人，在找大王。大王不在了，但有人在找他。"
+    next_node: END_ZIXIA_SCENE
+
+# Insight triggers
+insight_opportunities:
+  - location: S3_zixia_encounter
+    type: dialogue_pre
+    cost: 1_real_purpose
+    reveals: "紫霞不知道悟空被压在五指山下。她只知道悟空不见了。"
+  - location: S3_zixia_thanks
+    type: dialogue_mid
+    cost: 1_behind_dialogue
+    reveals: "幕后：紫霞的存在不改变任何局势，但改变一个东西——石卵会知道，有人在找大王。"
+
+# Variable effects
+variable_effects:
+  zixia_encounter:
+    - action: "met_and_told_truth"
+      value: "遇到且直接回答"
+    - action: "met_and_partial"
+      value: "遇到且间接回答"
+    - action: "met_and_silent"
+      value: "遇到且沉默陪伴"

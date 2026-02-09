@@ -1,0 +1,71 @@
+# NPC Dialogue Configuration: Yang Jian (Scene 1 - Chentangguan)
+# Source: /claude/plans/scenes/scene-1-chentangguan/npcs/yangjian.md
+
+npc_id: yangjian_s1
+name: 杨戬
+trigger_type: conditional  # Only appears under specific conditions
+scene: scene-1-chentangguan
+description: 条件触发NPC，神秘青年武者
+
+trigger_conditions:
+  - "本场景累计洞察检定成功次数 >= 3"
+  - "在A3c中听到'年轻人带黑狗'的信息"
+
+trigger_logic: OR
+
+initial_state:
+  awareness: omniscient  # Yang Jian knows more than he reveals
+  attitude: neutral_observant
+
+# Hidden intent
+hidden_intent:
+  core: "识别有心窍的人，留下回响的种子"
+  surface_mask: "路过的陌生人"
+  insight_reveal_text: "杨戬在寻找'有心窍的人'。他的话是故意留下的回响，将在Scene 2中闪回。"
+
+dialogue_nodes:
+  - node_id: S1_yangjian_encounter
+    trigger: condition_met
+    phase: 5  # End of scene
+    text: "有心窍的人，在这个世界活着比没有心窍的更难。你已经做得不错了。"
+    context: "离开陈塘关的路上，一个青年武者牵着黑狗走在你前面"
+    note: "杨戬没有回头，说完后消失在路的拐角"
+    player_options:
+      - id: ask_identity
+        text: "你是谁？"
+        response: "（没有回答，已经走远）"
+        next_node: END_ENCOUNTER
+      - id: stay_silent
+        text: "（沉默，目送他离开）"
+        effect: yangjian_triggered_true
+        next_node: END_ENCOUNTER
+      - id: call_out
+        text: "等等！"
+        response: "（黑狗回头看了一眼，然后跟着主人消失在拐角）"
+        effect: yangjian_triggered_true
+        next_node: END_ENCOUNTER
+
+  - node_id: END_ENCOUNTER
+    text: ""
+    effect: yangjian_triggered_true, scene2_insight_plus1
+    echo_foreshadowing: "这句话将在Scene 2中闪回——陆执面对封神选择时，脑海中会浮现这句莫名的话"
+
+# Insight triggers
+insight_opportunities:
+  - location: S1_yangjian_encounter
+    type: dialogue_pre
+    cost: 1_real_purpose
+    reveals: "杨戬在寻找'有心窍的人'。他的出现意味着玩家在本场景中表现出了足够的洞察力和情感共鸣。"
+  - location: S1_yangjian_encounter
+    type: dialogue_mid
+    cost: 1_behind_dialogue
+    reveals: "幕后：杨戬自己也是'有心窍的人'。他说这话时，想起了自己曾经的某个选择。"
+
+# Variable effects
+variable_effects:
+  yangjian_triggered:
+    - action: "encounter_complete"
+      value: true
+  scene2_bonuses:
+    - action: "yangjian_triggered"
+      effect: "Scene 2所有洞察检定+1修正值"

@@ -1,0 +1,45 @@
+# Decision Flow: Scene 4 - Decision D (离开时)
+# Source: /claude/plans/scenes/scene-4-lingtai/decisions/decision-d.md
+
+decision_id: S4_Decision_D
+decision_name: 离开时
+decision_type: micro_decision
+scene: scene-4-lingtai
+phase: 6
+phase_name: 结局
+
+context: |
+  仅在法明离开寺院（被逐/自行离开/消失）时触发。
+  法明在收拾行李时，发现自己抄经三年用的那支笔。
+  笔杆是普通的竹子，但被他的手磨得极其光滑。
+
+choices:
+  - id: D_take_pen
+    label: 带走笔
+    narrative: "法明把笔放进了行囊。"
+    effect: pen_taken
+    variable_impact: pen_taken = 带走
+    echo_preview: |
+      这支笔成为闪回触发物。
+      在后续场景中，某个角色会在某个书写的场景里（签名、写信、刻字）
+      突然感到手里的笔「不像自己的」——太轻了，或者太重了，或者握感不对。
+      他会停顿一瞬，然后继续写。
+    insight_opportunity:
+      cost: 1_real_purpose
+      reveals: "这支笔将成为跨场景的物理联结"
+
+  - id: D_leave_pen
+    label: 不带笔
+    narrative: "法明把笔留在了工位上。"
+    effect: pen_left
+    variable_impact: pen_taken = 留下
+    echo_preview: |
+      后来新来的抄经僧用了这支笔。
+      他不知道这支笔被谁磨得这么光滑。
+      他只是觉得这支笔写起来特别顺手——像是被人用过很久、很认真地用过。
+
+# Variable effects
+variable_effects:
+  pen_taken:
+    - D_take_pen: 带走
+    - D_leave_pen: 留下

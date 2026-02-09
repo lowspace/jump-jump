@@ -1,0 +1,74 @@
+# Decision Flow: Scene 3 - Decision A (猴群会议)
+# Source: /claude/plans/scenes/scene-3-huaguoshan/decisions/decision-a.md
+
+decision_id: S3_Decision_A
+decision_name: 猴群会议
+decision_type: stance_declaration
+scene: scene-3-huaguoshan
+phase: 3
+phase_name: 猴群会议
+
+context: |
+  这不是最终决策——这是立场表态。最终的核心决策在决策点B。
+  争吵到最后，两方都看向石卵。
+  老猴：「石卵，你说。」
+  铁头：「你也是大王的猴子。你说。」
+  这一刻石卵不是「杂役」了。他是「被问到的人」。
+
+choices:
+  - id: A_support_laohou
+    label: 支持老猴
+    text: "活下来最重要。"
+    narrative: "老猴松了口气。铁头看着你，眼里有失望，但没有恨。"
+    effect: laohou_relief, monkey_unity_drift_apart
+    hidden: "猴群情绪偏向'散'，但铁头不会跟着散。他会独自留在山上。"
+    npc_reactions:
+      laohou: relieved
+      tietou: disappointed_but_not_hateful
+    insight_opportunity:
+      cost: 1_real_purpose
+      reveals: "老猴选择'散'不是因为不在乎大王，而是因为他知道记忆的代价"
+
+  - id: A_support_tietou
+    label: 支持铁头
+    text: "大王的东西不能丢。"
+    narrative: "铁头感激地看着你。老猴摇头，叹了一口气。"
+    effect: tietou_grateful, monkey_unity_split
+    hidden: "猴群分裂加剧——一部分跟老猴走，一部分跟铁头留。"
+    npc_reactions:
+      tietou: grateful
+      laohou: disappointed
+
+  - id: A_third_way
+    label: 说出自己的想法（第三条路）
+    text: "（提出第三条路，如移植桃树）"
+    skill_check: persuasion_DC14
+    success:
+      narrative: "双方愿意听下去，你获得主导后续决策的机会。"
+      effect: unlock_transplant_option, both_listen
+    failure:
+      narrative: "被认为'想得太多'。"
+      effect: dismissed_as_overthinking
+    insight_opportunity:
+      cost: 1_real_purpose
+      reveals: "第三条路需要特定的说服能力，但成功后能改变整个局面"
+
+  - id: A_admit_uncertainty
+    label: 「我不知道。」
+    text: "诚实但无力"
+    narrative: "沉默。没有人怪你——因为没有人知道正确答案。"
+    effect: honesty_remembered, stalemate_continues
+    hidden: "你的诚实被记住了。"
+
+# Variable effects
+variable_effects:
+  monkey_unity:
+    - A_support_laohou: drift_apart
+    - A_support_tietou: split
+    - A_third_way_success: unlock_transplant
+  laohou_trust:
+    - A_support_laohou: +1
+    - A_support_tietou: -1
+  tietou_trust:
+    - A_support_tietou: +1
+    - A_support_laohou: -1

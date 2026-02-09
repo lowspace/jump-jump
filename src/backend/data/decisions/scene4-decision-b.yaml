@@ -1,0 +1,91 @@
+# Decision Flow: Scene 4 - Decision B (是否质问监院？)
+# Source: /claude/plans/scenes/scene-4-lingtai/decisions/decision-b.md
+
+decision_id: S4_Decision_B
+decision_name: 是否质问监院？
+scene: scene-4-lingtai
+phase: 3
+phase_name: 质问
+
+context: |
+  出现于阶段三。法明已经发现了无字真经的真相，需要决定如何面对监院。
+
+choices:
+  - id: B1_confront
+    label: 去质问监院
+    narrative: "法明走进监院的办公禅房。"
+    initial_response: "我说过了，那是净经。佛祖以心传法，不立文字。你看到空白，是你的心不够静。"
+    follow_up_required: true
+    sub_choices:
+      - id: B1_persist
+        label: 继续追问
+        text: "那为什么净经也要编号？也要送往东土？空白的经卷给凡人看，他们能看到什么？"
+        approach_variants:
+          - approach: appeal_to_faith
+            text: "我抄经是因为信佛。如果经是空的，我的信还有根基吗？"
+            dc: 16
+            failure_response: "信仰不需要根基。需要根基的，那叫交易。"
+            insight_hint: "诉诸信仰会让监院反驳"
+          - approach: appeal_to_logic
+            text: "灵山花了大量人力物力准备取经的经卷，其中三分之一是空白的——这不合理。"
+            dc: 14
+            response: "监院会犹豫片刻，但随即回到标准话术"
+          - approach: appeal_to_emotion
+            text: "监院，我只是想理解。我在这里抄了三年，我觉得我至少有权理解自己在做什么。"
+            dc: 12
+            response: "监院会短暂地、真诚地同情法明"
+        outcomes:
+          - condition: "success_by_5plus"
+            result: 监院犹豫
+            narrative: "监院沉默了很长时间。然后说：'法明，你的问题……不是没有道理。但这不是你该问的。也不是我能答的。'"
+            effect: jianyuan_attitude_hesitant
+          - condition: "success"
+            result: 训诫
+            narrative: "监院叹了口气：'你的信心需要磨炼。我给你三天假，去后山打坐。三天后回来继续抄经。不要再想这件事了。'"
+            effect: jianyuan_attitude_disciplined, three_days_freedom
+          - condition: "failure"
+            result: 警告
+            narrative: "'法明，我最后说一次：你的职责是抄经。如果你连这一点都做不到，我会向上面申请把你调走。'"
+            effect: jianyuan_attitude_warning
+          - condition: "failure_by_5plus"
+            result: 处分
+            narrative: "'你的信力已经动摇了。一个信力动摇的人不适合抄经。从今天起你不用来抄经房了。去伙房帮忙吧。'"
+            effect: jianyuan_attitude_punitive, player_expelled_from_sutra_room
+
+  - id: B2_investigate_alone
+    label: 不去质问，独自调查
+    narrative: "法明选择不惊动监院，利用日常工作的间隙继续调查。"
+    skill_check: stealth_DC12
+    success:
+      narrative: "法明在监院外出时溜进后山经库。看到了整面墙的经卷架——至少有三分之一的格子里放的是空白经卷，与有字经文交替排列，编号连续。"
+      effect: key_info_systematic_blank_sutras
+      hidden: "这不是差错，是设计。"
+    failure:
+      narrative: "后山经库的锁比想象中更复杂。法明在门口徘徊时被一个巡夜僧看到。"
+      effect: stealth_reduced
+
+  - id: B3_consult_huikong
+    label: 找慧空商量
+    prerequisite: "阶段二中慧空关系变量不是'对立'"
+    narrative: "法明去找慧空。"
+    conditional_response:
+      - condition: "huikong_relationship = understanding_or_tacit"
+        narrative: "'你想去问监院？别去。问了也是白问。他会告诉你'信力不足'。我问过。'慧空会告诉法明后山经库的位置和监院的巡查时间。"
+        effect: unlock_back_sutra_location, shares_15_years_intelligence
+      - condition: "huikong_relationship = honest"
+        narrative: "'你要去就去。但做好准备——他不会给你答案。'慧空不会阻止也不会帮助。"
+      - condition: "huikong_relationship = tense"
+        narrative: "'你的事不要扯上我。'语气生硬，但他说完之后犹豫了一下，补了一句：'监院午时会去后山。'这是暗示。"
+        effect: unlock_monastery_schedule_info
+
+# Variable effects
+variable_effects:
+  jianyuan_attitude:
+    - B1_great_success: 犹豫
+    - B1_success: 训诫
+    - B1_failure: 警告
+    - B1_catastrophe: 处分
+  monastery_fate:
+    - B1_catastrophe: 被逐至伙房
+  huikong_relationship:
+    - B3: "根据现有关系决定回应"

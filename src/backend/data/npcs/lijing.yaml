@@ -1,0 +1,156 @@
+# NPC Dialogue Configuration: Li Jing (Scene 1 - Chentangguan)
+# Source: /claude/plans/scenes/scene-1-chentangguan/npcs/lijing.md
+
+npc_id: lijing_s1
+name: 李靖
+scene: scene-1-chentangguan
+description: 陈塘关总兵，武将世家出身
+
+initial_state:
+  composure: high  # high, shaken, broken
+  attitude_to_wushi: neutral  # neutral, suspicious, hostile
+  hesitation_level: low  # low, medium, high (affected by player persuasion)
+
+# Hidden intent - NEVER exposed to other NPCs
+hidden_intent:
+  core: "保全家族和陈塘关，但内心深处知道自己在牺牲儿子"
+  surface_mask: "冷静、理性、公事公办"
+  insight_reveal_text: "李靖的残忍不是暴力，是冷。他的痛苦在于这个选择太容易算了。"
+
+dialogue_nodes:
+  # Phase 2: Decision A2 - In the Study
+  - node_id: S1_lijing_A2_opening
+    trigger: decision_A2
+    phase: 2
+    text: "你来得正好。哪吒在哪？"
+    context: "李靖书房，正在写信"
+    player_options:
+      - id: A2a_persuade_emotion
+        text: "他是你的儿子，你不能这样对他。"
+        skill_check: persuasion_DC16
+        approach: emotional
+        success_effect: hesitation_high
+        success_next: S1_lijing_A2_shaken
+        failure_effect: lijing_deflects_emotion
+        failure_next: S1_lijing_A2_counter
+        insight_reveal: "诉诸感情会让李靖反驳：'我有一个儿子和一座城，你替我选'"
+      - id: A2a_persuade_interest
+        text: "否认亲子，天下人会怎么看李家？你以后还怎么统兵？"
+        skill_check: persuasion_DC12
+        approach: interest
+        success_effect: hesitation_medium_or_high
+        success_next: S1_lijing_A2_considers
+        failure_effect: hesitation_low
+        failure_next: S1_lijing_A2_dismissive
+        insight_reveal: "诉诸利害会让李靖真正犹豫"
+      - id: A2a_persuade_mixed
+        text: "（结合感情与利害）"
+        skill_check: persuasion_DC14
+        approach: mixed
+        success_effect: hesitation_medium
+        success_next: S1_lijing_A2_considers
+      - id: A2b_reveal_location
+        text: "他在城外海边。"
+        effect: lijing_trust_plus
+        next_node: S1_lijing_A2_sends_men
+        hidden: "获得李靖信任，但哪吒被带回时毫无准备"
+      - id: A2c_hide_location
+        text: "我不知道。练完拳他就走了。"
+        skill_check: deception_DC11
+        success_effect: lijing_fooled
+        success_next: S1_lijing_A2_time_bought
+        failure_effect: lijing_suspicious
+        failure_next: S1_lijing_A2_confronts
+
+  - node_id: S1_lijing_A2_shaken
+    text: "..."
+    context: "李靖沉默了很久"
+    conditional_outcome:
+      - condition: "persuasion_success_by_5plus"
+        effect: hesitation_high
+        next_node: S1_lijing_A2_deeply_shaken
+      - condition: "normal_success"
+        effect: hesitation_medium
+        next_node: S1_lijing_A2_considers
+
+  - node_id: S1_lijing_A2_deeply_shaken
+    text: "你说得对...但这不代表我能改变什么。"
+    context: "李靖手在发抖"
+    effect: hesitation_high
+    next_node: END_DECISION_A2
+
+  - node_id: S1_lijing_A2_counter
+    text: "我有一个儿子和一座城。你替我选。"
+    context: "李靖冷静反驳"
+    effect: hesitation_unchanged
+    next_node: END_DECISION_A2
+
+  - node_id: S1_lijing_A2_considers
+    text: "..."
+    context: "李靖短暂犹豫"
+    effect: hesitation_medium
+    next_node: END_DECISION_A2
+
+  - node_id: S1_lijing_A2_dismissive
+    text: "这些我自有考量。"
+    context: "李靖不为所动"
+    effect: hesitation_low
+    next_node: END_DECISION_A2
+
+  - node_id: S1_lijing_A2_sends_men
+    text: "好。"
+    context: "李靖立刻派人去找"
+    effect: lijing_trust_plus, nezha_unprepared
+    next_node: END_DECISION_A2
+
+  - node_id: S1_lijing_A2_time_bought
+    text: "...去吧。"
+    context: "李靖信了"
+    effect: time_window_opened
+    next_node: END_DECISION_A2
+
+  - node_id: S1_lijing_A2_confronts
+    text: "你在帮他？"
+    context: "李靖看穿了你"
+    effect: lijing_suspicious, wushi_status_reduced
+    next_node: END_DECISION_A2
+
+  # Phase 3: Public Denial
+  - node_id: S1_lijing_p3_denial
+    trigger: phase_3_denial
+    phase: 3
+    text: "哪吒是我夫人怀胎三年零六月，从肉球中剖出之物。非人，非妖，非我李靖之子。他的孽，他自己担。"
+    context: "陈塘关城楼，面对龙王使者和全城百姓"
+    conditional_delivery:
+      - condition: "hesitation = high"
+        delivery: "明显的停顿，手在发抖，百姓中有人注意到"
+        effect: nezha_notices_hesitation
+      - condition: "hesitation = medium"
+        delivery: "停顿很短，只有武师能察觉"
+        effect: wushi_notices_hesitation
+      - condition: "hesitation = low"
+        delivery: "干脆利落，面无表情"
+    next_node: END_PHASE_3
+
+# Insight triggers
+insight_opportunities:
+  - location: S1_lijing_A2_opening
+    type: dialogue_pre
+    cost: 1_real_purpose
+    reveals: "李靖聘武师不只是教武，也是监视。武师是他的眼睛，只是武师自己不知道。"
+  - location: S1_lijing_p3_denial
+    type: dialogue_mid
+    cost: 1_real_purpose
+    reveals: "李靖的痛苦不在于选择本身，而在于这个选择太容易算了。"
+
+# Variable effects
+variable_effects:
+  lijing_hesitation:
+    - action: "A2a_emotional_success"
+      value: high
+    - action: "A2a_interest_success"
+      value: medium
+    - action: "A2a_mixed_success"
+      value: medium
+    - action: "failure"
+      value: low

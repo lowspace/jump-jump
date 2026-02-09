@@ -1,0 +1,61 @@
+# /src/backend/core/__init__.py
+# Core module exports
+
+from .state_schema import (
+    GameState,
+    NPCStateCard,
+    ObservableOutput,
+    HiddenIntent,
+    Message,
+    PlayerAction,
+    Decision,
+    RevealEvent,
+    InsightQuota,
+    InsightUsage,
+    SceneId,
+    PhaseId,
+    NPCLayer,
+    InsightType,
+    EmotionalTone,
+    ActionType,
+    GameStartResponse,
+    ActionResponse,
+    InsightResponse,
+)
+
+from .config import (
+    game_config,
+    llm_config,
+    db_config,
+    server_config,
+    SCENE_ORDER,
+    DEFAULT_VARIABLES,
+)
+
+__all__ = [
+    "GameState",
+    "NPCStateCard",
+    "ObservableOutput",
+    "HiddenIntent",
+    "Message",
+    "PlayerAction",
+    "Decision",
+    "RevealEvent",
+    "InsightQuota",
+    "InsightUsage",
+    "SceneId",
+    "PhaseId",
+    "NPCLayer",
+    "InsightType",
+    "EmotionalTone",
+    "ActionType",
+    "GameStartResponse",
+    "ActionResponse",
+    "InsightResponse",
+    "game_config",
+    "llm_config",
+    "db_config",
+    "server_config",
+    "SCENE_ORDER",
+    "DEFAULT_VARIABLES",
+]

@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jump Jump - 悟空传</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="app">
+        <!-- Header -->
+        <header class="game-header">
+            <h1>Jump Jump</h1>
+            <div class="game-meta">
+                <span id="scene-indicator">场景: 五指山</span>
+                <span id="turn-indicator">回合: 0</span>
+            </div>
+        </header>
+
+        <!-- Main Game Area -->
+        <main class="game-main">
+            <!-- Narrative Display -->
+            <section class="narrative-section">
+                <div id="narrative-display" class="narrative-display">
+                    <p class="narrative-text">欢迎来到 Jump Jump...</p>
+                </div>
+            </section>
+
+            <!-- Behind-the-Scenes Panel -->
+            <section id="behind-scenes" class="behind-scenes hidden">
+                <h3>【背后博弈】</h3>
+                <div id="behind-scenes-content"></div>
+            </section>
+
+            <!-- Decision Panel -->
+            <section id="decision-panel" class="decision-panel hidden">
+                <h3 id="decision-title">决策</h3>
+                <p id="decision-description"></p>
+                <div id="decision-choices" class="decision-choices"></div>
+            </section>
+
+            <!-- Action Panel -->
+            <section class="action-section">
+                <div id="action-buttons" class="action-buttons"></div>
+            </section>
+        </main>
+
+        <!-- Sidebar -->
+        <aside class="game-sidebar">
+            <!-- Insight System -->
+            <section class="insight-panel">
+                <h3>洞察力</h3>
+                <div class="insight-quota">
+                    <div class="insight-type">
+                        <span class="insight-label">真实目的</span>
+                        <span id="insight-true-purpose" class="insight-count">2</span>
+                    </div>
+                    <div class="insight-type">
+                        <span class="insight-label">幕后对话</span>
+                        <span id="insight-behind-dialogue" class="insight-count">2</span>
+                    </div>
+                </div>
+                <button id="btn-insight" class="btn-insight" disabled>使用洞察</button>
+            </section>
+
+            <!-- Variable Display -->
+            <section class="variables-panel">
+                <h3>状态</h3>
+                <div id="variables-display" class="variables-display">
+                    <div class="variable-item">
+                        <span class="var-name">信念侵蚀</span>
+                        <span id="var-faith" class="var-value">0</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Connection Status -->
+            <section class="connection-panel">
+                <div id="connection-status" class="connection-status disconnected">
+                    未连接
+                </div>
+            </section>
+        </aside>
+
+        <!-- Insight Modal -->
+        <div id="insight-modal" class="modal hidden">
+            <div class="modal-content">
+                <span class="close-btn">&times;</span>
+                <h3>使用洞察力</h3>
+                <div id="insight-options" class="insight-options"></div>
+                <div id="insight-result" class="insight-result hidden"></div>
+            </div>
+        </div>
+
+        <!-- Scene Transition Modal -->
+        <div id="transition-modal" class="modal hidden">
+            <div class="modal-content transition-content">
+                <h2>场景切换</h2>
+                <p id="transition-text"></p>
+                <button id="btn-continue" class="btn-primary">继续</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="gameUI.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
