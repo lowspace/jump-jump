@@ -29,3 +29,6 @@ pytest-asyncio>=0.23.3
 
 # Development
 python-dotenv>=1.0.0
+
+# CLI
+rich>=13.0.0
