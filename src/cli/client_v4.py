@@ -14,7 +14,18 @@ from rich.table import Table
 from rich.text import Text
 from rich.prompt import Prompt
 
-from backend.app.llm_npc_agent import create_scene_0_agents, LLMNPCAgentPool
+# Direct import to avoid backend/__init__.py loading fastapi
+import importlib.util
+import sys
+
+spec = importlib.util.spec_from_file_location(
+    "llm_npc_agent",
+    "/Users/dnhb/Desktop/GitHub/My_Projects/jump-jump/src/backend/app/llm_npc_agent.py"
+)
+llm_module = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(llm_module)
+create_scene_0_agents = llm_module.create_scene_0_agents
+LLMNPCAgentPool = llm_module.LLMNPCAgentPool
 
 console = Console()
 
