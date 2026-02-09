@@ -300,11 +300,56 @@ class GameClient {
             this.ui.displayNarrative(payload.scene_summary, '', false);
         }
 
-        // Show continue button or auto-transition
-        setTimeout(() => {
-            // In a full implementation, this would trigger the next scene
-            this.ui.displayNarrative('准备进入下一个场景...', '', false);
-        }, 3000);
+        // Show continue button for scene transition
+        this.ui.showContinueButton(() => this.transitionToNextScene());
+    }
+
+    async transitionToNextScene() {
+        try {
+            this.ui.displayNarrative('正在进入下一个场景...', '', false);
+
+            const response = await fetch(`${this.apiBaseUrl}/game/${this.sessionId}/transition`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({})  // Empty body, let server determine next scene
+            });
+
+            if (!response.ok) {
+                throw new Error('Scene transition failed');
+            }
+
+            const data = await response.json();
+
+            // Hide transition modal
+            this.ui.hideTransitionModal();
+            this.ui.hideContinueButton();
+
+            // Update UI with new scene
+            this.ui.updateSceneIndicator(data.current_scene);
+            this.ui.clearNarrative();
+
+            // Display new scene opening
+            if (data.narrative_text) {
+                await this.ui.displayNarrative(data.narrative_text, '', false);
+            }
+
+            // Show new actions
+            if (data.available_actions) {
+                this.ui.showActionButtons(data.available_actions, (action) => this.sendAction(action));
+            }
+
+            // Update insight quota
+            if (data.insight_quota) {
+                this.ui.updateInsightQuota(
+                    data.insight_quota.true_purpose,
+                    data.insight_quota.behind_dialogue
+                );
+            }
+
+        } catch (error) {
+            console.error('Error transitioning to next scene:', error);
+            this.ui.displayNarrative('场景切换失败，请刷新页面重试。', '', false);
+        }
     }
 
     handleError(error) {

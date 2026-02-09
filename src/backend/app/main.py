@@ -235,23 +235,46 @@ async def load_checkpoint(session_id: str, checkpoint_id: str):
 
 
 @app.post("/api/game/{session_id}/transition")
-async def transition_scene(session_id: str, transition: dict):
+async def transition_scene(session_id: str, transition: dict = None):
     """
     Transition to a new scene
 
     Args:
         session_id: Game session ID
-        transition: Transition details
+        transition: Optional transition details
             {
-                "new_scene": "scene-id"
+                "new_scene": "scene-id"  # If not provided, auto-determine next scene
             }
 
     Returns:
         Transition result
     """
+    transition = transition or {}
     new_scene = transition.get("new_scene")
+
+    # If no new_scene provided, auto-determine next scene
     if not new_scene:
-        raise HTTPException(status_code=400, detail="new_scene is required")
+        state = state_manager.load_session(session_id)
+        if not state:
+            raise HTTPException(status_code=404, detail="Session not found")
+
+        current_scene = state["current_scene"]
+        from ..core.config import SCENE_ORDER
+
+        try:
+            current_idx = SCENE_ORDER.index(current_scene)
+            if current_idx < len(SCENE_ORDER) - 1:
+                new_scene = SCENE_ORDER[current_idx + 1]
+            else:
+                # Already at last scene
+                return {
+                    "session_id": session_id,
+                    "current_scene": current_scene,
+                    "message": "已经到达最后一个场景",
+                    "game_complete": True
+                }
+        except ValueError:
+            raise HTTPException(status_code=400, detail=f"Unknown current scene: {current_scene}")
 
     result = await game_engine.transition_to_scene(session_id, new_scene)
 

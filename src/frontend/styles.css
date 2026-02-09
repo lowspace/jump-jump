@@ -223,6 +223,32 @@ body {
     cursor: not-allowed;
 }
 
+/* Continue Button */
+.continue-btn {
+    background: var(--accent-gold);
+    color: var(--bg-primary);
+    border: none;
+    padding: 1rem 2rem;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: inherit;
+    margin: 1rem auto;
+    display: block;
+}
+
+.continue-btn:hover {
+    background: #d4a030;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
+}
+
+.continue-btn.hidden {
+    display: none;
+}
+
 /* Sidebar */
 .game-sidebar {
     grid-area: sidebar;

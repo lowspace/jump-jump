@@ -323,6 +323,28 @@ class GameUI {
         this.elements.transitionModal.classList.add('hidden');
     }
 
+    showContinueButton(onClick) {
+        // Create continue button if it doesn't exist
+        let btnContinue = document.getElementById('btn-continue-action');
+        if (!btnContinue) {
+            btnContinue = document.createElement('button');
+            btnContinue.id = 'btn-continue-action';
+            btnContinue.className = 'continue-btn';
+            btnContinue.textContent = '继续';
+            this.elements.actionButtons.appendChild(btnContinue);
+        }
+
+        btnContinue.classList.remove('hidden');
+        btnContinue.onclick = onClick;
+    }
+
+    hideContinueButton() {
+        const btnContinue = document.getElementById('btn-continue-action');
+        if (btnContinue) {
+            btnContinue.classList.add('hidden');
+        }
+    }
+
     // Game Meta
     updateSceneIndicator(scene) {
         const sceneNames = {
