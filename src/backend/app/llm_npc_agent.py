@@ -17,16 +17,19 @@ except ImportError:
 # Global LLM configuration
 _llm_config = {
     "api_key": None,
-    "base_url": None
+    "base_url": None,
+    "model": "gpt-3.5-turbo"
 }
 
-def set_llm_config(api_key: str = None, base_url: str = None):
+def set_llm_config(api_key: str = None, base_url: str = None, model: str = None):
     """Set LLM configuration programmatically"""
     global _llm_config
     if api_key:
         _llm_config["api_key"] = api_key
     if base_url:
         _llm_config["base_url"] = base_url
+    if model:
+        _llm_config["model"] = model
 
 
 @dataclass
@@ -172,8 +175,9 @@ class LLMNPCAgent:
 
         try:
             # CALL OPENAI API
+            model = _llm_config.get("model", "gpt-3.5-turbo")
             response = self.client.chat.completions.create(
-                model="gpt-3.5-turbo",
+                model=model,
                 messages=[
                     {"role": "system", "content": self._build_system_prompt()},
                     {"role": "user", "content": f"玩家对你说: \"{player_input}\"\n\n请根据角色设定生成回复，严格按JSON格式输出。"}

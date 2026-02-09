@@ -269,6 +269,7 @@ def main():
 Examples:
   python -m cli.client_v4 --api-key sk-xxx
   python -m cli.client_v4 --api-key xxx --base-url https://api.xxx.com/v1
+  python -m cli.client_v4 --api-key xxx --model gpt-4
   python -m cli.client_v4  # Uses OPENAI_API_KEY env var
         '''
     )
@@ -282,11 +283,17 @@ Examples:
         type=str,
         help='Base URL for API (default: OpenAI official)'
     )
+    parser.add_argument(
+        '--model',
+        type=str,
+        default='gpt-3.5-turbo',
+        help='Model name (default: gpt-3.5-turbo)'
+    )
     args = parser.parse_args()
 
     # Set LLM configuration if provided
-    if args.api_key or args.base_url:
-        set_llm_config(api_key=args.api_key, base_url=args.base_url)
+    if args.api_key or args.base_url or args.model:
+        set_llm_config(api_key=args.api_key, base_url=args.base_url, model=args.model)
 
     cli = JumpJumpCLIV4()
     try:
