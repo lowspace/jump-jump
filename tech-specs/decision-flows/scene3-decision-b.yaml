@@ -1,0 +1,104 @@
+# Decision Flow: Scene 3 - Decision B (桃树的命运)
+# Source: /claude/plans/scenes/scene-3-huaguoshan/decisions/decision-b.md
+
+decision_id: S3_Decision_B
+decision_name: 桃树的命运
+decision_type: core_p6_ripple
+scene: scene-3-huaguoshan
+phase: 4
+phase_name: 核心决策
+
+context: |
+  核心P6涟漪决策。猴群最后一次聚在一起。
+  不是因为石卵最聪明、最勇敢、最有办法。
+  是因为老猴和铁头各执一词谁也说服不了谁，而石卵是唯一一个两边都没有得罪的猴子。
+
+choices:
+  - id: B1_cut_tree
+    label: 砍掉桃树
+    text: "砍了。天兵看不到就不会来。没有桃树，花果山就是一座普通的山。普通的山上住几只普通的猴子，没有人会在意。"
+    narrative: "老猴闭上眼睛，点了点头。铁头一拳砸在地上，但没有说话。"
+    effect: peach_tree_fate_cut
+    variable_impact: peach_tree_fate = 砍掉
+    consequences:
+      survival: "猴群存活概率大幅提高——天兵找不到标志物，花果山降格为普通山岭"
+      tietou: "铁头好感度-2。他不会恨石卵，但他的火灭了一大半。他可能不久后独自离开"
+      narrative: "花果山的最后一棵桃树，被花果山自己的猴子砍掉了。"
+    insight_opportunity:
+      cost: 1_real_purpose
+      reveals: "这是最安全的选择，但也是最悲伤的选择——大王最后的痕迹被自己的猴子 erase"
+
+  - id: B2_keep_tree
+    label: 保留桃树
+    text: "不砍。那是大王的桃树。天兵要来就来。我们能藏多久藏多久，藏不住了……再说。"
+    narrative: "铁头第一次笑了。老猴的脸色铁青。"
+    effect: peach_tree_fate_keep
+    variable_impact: peach_tree_fate = 保留
+    skill_check: stealth_DC14
+    success:
+      narrative: "猴群想出了遮掩桃树的办法（用枯枝搭棚、用泥涂树干），至少能撑过几次巡逻。"
+    failure:
+      narrative: "桃树太显眼了，迟早会被发现。时间所剩无几。"
+    consequences:
+      risk: "猴群面临更大的风险——但桃树活着，齐天大圣的痕迹还在"
+      laohou: "老猴好感度-1，他会说：'你们年轻的，不怕死。'但他不会离开——他走不动了"
+    echo_preview: |
+      Scene 0重新渲染：少年看到的不是烧焦桃树残根，而是一棵活着的小桃树。
+      Scene 4闪回：法明在寺院后院看到一棵桃树，莫名觉得"很重要"。
+
+  - id: B3_transplant
+    label: 移植桃树（第三条路）
+    text: "不砍。也不留在这里。把桃树挖走，种到天兵找不到的地方。"
+    prerequisite: "阶段三提出第三条路且说服检定成功，或同时探索了水帘洞和山顶"
+    narrative: "老猴抬头看你：'种到哪里？'"
+    player_input: "需要石卵给出一个具体的地点"
+    skill_check: organization_DC13
+    outcomes:
+      - condition: "success_by_5plus"
+        result: 大成功
+        narrative: "桃树被成功移植，而且猴群在合作中找回了一点凝聚力。老猴和铁头在搬树的过程中第一次没有吵架。"
+      - condition: "success"
+        result: 成功
+        narrative: "桃树移植成功，但过程艰难。桃树到了新地方，能不能活还不确定。"
+      - condition: "failure"
+        result: 失败
+        narrative: "移植过程中桃树的根系受损。它可能活，也可能死。你只能等。"
+      - condition: "failure_by_5plus"
+        result: 灾难性失败
+        narrative: "移植过程中惊动了天兵巡逻。猴群被迫紧急撤离，桃树被弃在半路。"
+    effect: peach_tree_fate_transplant
+    variable_impact: peach_tree_fate = 移植
+    hidden_ending_trigger:
+      condition: "wushi_presence = 高 AND ledger_choice != 揭发 AND monkey_unity = 团结 AND player_suggests_wuzhishan"
+      effect: "解锁'移植到五指山'选项"
+      ultimate_ripple: "P6终极涟漪：五指山下被压着的悟空旁边多了一棵桃树"
+    insight_opportunity:
+      cost: 1_real_purpose
+      reveals: "如果玩家自己想到移植到五指山，这是P6原则的极致体现"
+
+# Degree elasticity
+degree_elasticity:
+  - condition: "wukong_stick = 保留"
+    effect: "石卵会下意识握紧桃木棍。GM描述：'你手里那根木棍——大王削的那根——好像比平时更重了一点。'"
+  - condition: "zixia_encounter != 未遇到"
+    effect: "石卵会想起那个女人问的'他还好吗'。突然觉得，桃树不只是猴群的事——还有别人在乎大王在不在。"
+  - condition: "scene1_wushi_presence = 高"
+    effect: "石卵会想起梦里的'一个人站在另一个人旁边'。想：'也许'在旁边'这件事本身就够了。'"
+  - condition: "young_monkeys_present"
+    effect: "无论选什么，GM必须描述幼猴的反应。他们不懂大人在争什么，但他们会抓住最近的大猴子的手。"
+
+# Variable effects
+variable_effects:
+  peach_tree_fate:
+    - B1: 砍掉
+    - B2: 保留
+    - B3: 移植
+  monkey_unity:
+    - B1: drift_apart
+    - B2: risky_together
+    - B3_success: strengthened
+  scene0_echo:
+    - B2: "活着的桃树"
+    - B3_to_wuzhishan: "五指山桃树终极涟漪"
+  scene4_echo:
+    - B2: "法明看桃树闪回"

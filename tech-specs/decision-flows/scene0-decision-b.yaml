@@ -1,0 +1,99 @@
+# Decision Flow: Scene 0 - Decision B (山体深处的声音)
+# Source: /claude/plans/scenes/scene-0-wuzhishan/decisions/decision-b.md
+
+decision_id: S0_Decision_B
+decision_name: 山体深处的声音
+scene: scene-0-wuzhishan
+phase: 2
+phase_name: 山中
+
+context: |
+  少年坐在石头上休息时，周围非常安静。安静到能听到自己的心跳。
+  然后他注意到——不只是安静。是太安静了。没有鸟叫，没有虫鸣。
+  像是整座山在屏住呼吸。
+  然后，脚下传来一声低沉的震动。不是地震。比地震温柔得多。
+  像是什么巨大的东西，叹了一口气。
+
+choices:
+  - id: B1_listen
+    label: 贴耳去听
+    text: "少年趴在地上，把耳朵贴在岩石表面"
+    effect: mountain_voice_listen, curiosity_plus2
+    variable_impact:
+      mountain_voice: 倾听
+      curiosity_level: +2
+    skill_check: perception_DC16
+    outcomes:
+      - condition: "DC16+ (大成功)"
+        narrative: |
+          你听到了。极其模糊，像隔着几百丈的岩石传来的声音。不是风。
+          是声带振动产生的声音。有人——或者有什么——在说话。
+          你听不清一个字，但你确定那是一个声音，不是自然现象。
+          你的心跳加速。你突然非常确定：这座山下面，压着什么活的东西。
+        effect: wukong_awareness_full
+        variable_impact: wukong_awareness = 意识到
+      - condition: "DC11-15 (成功)"
+        narrative: |
+          你听到了一些东西。可能是声音，也可能是岩石内部的应力释放。
+          你不确定。但你的直觉告诉你，这座山不只是一座山。
+        effect: wukong_awareness_partial
+        variable_impact: wukong_awareness = 隐约感觉
+      - condition: "DC10- (失败)"
+        narrative: "石头很硬，很凉，贴着耳朵有点疼。你什么特别的都没听到。"
+        effect: wukong_awareness_none
+        variable_impact: wukong_awareness = 完全不知道
+
+  - id: B2_run
+    label: 跑开
+    text: "站起来抓起柴刀就跑。腿脚快，心跳更快"
+    effect: mountain_voice_run, curiosity_minus1
+    variable_impact:
+      mountain_voice: 逃跑
+      curiosity_level: -1
+    consequence: "少年快速下山，跳过后续山上事件，直接进入祖母部分"
+
+  - id: B3_speak
+    label: 对着石缝说话
+    text: "鬼使神差地，少年蹲在一条宽石缝旁，朝里面说了一句话"
+    note: "说什么由玩家决定"
+    effect: mountain_voice_speak, curiosity_plus1
+    variable_impact:
+      mountain_voice: 对话
+      curiosity_level: +1
+    skill_check: luck_DC15
+    success:
+      narrative: |
+        说完之后，沉默了很久。然后——也许是你的错觉——
+        石缝里冒出的热气似乎变了一下节奏。像是有什么东西……听到了。
+        然后一切恢复正常。你不确定刚才发生了什么。
+      effect: wukong_awareness_partial
+      variable_impact: wukong_awareness = 隐约感觉
+    failure:
+      narrative: "什么都没发生。你觉得自己有点傻，对着石头说话。"
+
+  - id: B4_tell_grandmother
+    label: 下山告诉祖母
+    text: "记住了这件事，打算问祖母"
+    effect: mountain_voice_tell, curiosity_plus1
+    variable_impact:
+      mountain_voice: 告知
+      curiosity_level: +1
+    consequence: "祖母部分解锁额外对话"
+
+# Variable effects
+variable_effects:
+  mountain_voice:
+    - B1: 倾听
+    - B2: 逃跑
+    - B3: 对话
+    - B4: 告知
+  curiosity_level:
+    - B1: +2
+    - B2: -1
+    - B3: +1
+    - B4: +1
+  wukong_awareness:
+    - B1_DC16+: 意识到
+    - B1_DC11-15: 隐约感觉
+    - B1_DC10-: 完全不知道
+    - B3_success: 隐约感觉

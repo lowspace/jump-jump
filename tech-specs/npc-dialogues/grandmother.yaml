@@ -1,0 +1,116 @@
+# NPC Dialogue Configuration: Grandmother (Scene 0 - Wuzhishan)
+# Source: /claude/plans/scenes/scene-0-wuzhishan/npcs/grandmother.md
+
+npc_id: grandmother_s0
+name: 祖母
+scene: scene-0-wuzhishan
+description: 山脚村中的老人，Scene 1-4的扭曲镜像
+
+initial_state:
+  story_count: 0  # 0-4 stories told
+  memory_clarity: fuzzy  # Fuzzy, mixed, vivid
+  attitude: gentle_persistent
+
+# Core function
+core_function: "Scene 1-4的扭曲镜像。讲述的四个故事分别对应四个场景的核心事件，但经过时间和传播的扭曲。"
+
+dialogue_nodes:
+  # Phase 2: Stories
+  - node_id: S0_grandmother_stories
+    trigger: phase_2_return
+    phase: 2
+    text: "回来啦。柴呢？"
+    context: "少年下山回到村中，祖母坐在门口老槐树下"
+    player_options:
+      - id: tell_discoveries
+        text: "（把今天的发现告诉祖母）"
+        effect: grandmother_responds_to_discoveries
+        next_node: S0_grandmother_responds
+      - id: normal_meal
+        text: "（不说发现，正常吃饭）"
+        effect: grandmother_offers_story
+        next_node: S0_grandmother_offers
+      - id: ask_about_mountain
+        text: "问祖母关于山的事"
+        effect: unlock_extra_narrative
+        next_node: S0_grandmother_extra
+
+  - node_id: S0_grandmother_offers
+    text: "闲着也是闲着，我给你讲个故事？"
+    effect: story_offer_made
+    player_options:
+      - id: listen_story
+        text: "好。"
+        effect: story_count_plus1
+        next_node: S0_grandmother_story_select
+      - id: decline
+        text: "今天不想听。"
+        effect: story_skipped
+        next_node: END_GRANDMOTHER_SCENE
+
+  - node_id: S0_grandmother_story_select
+    text: ""
+    conditional_story:
+      - condition: "story_count = 1"
+        title: "故事一（对应Scene 1——陈塘关·骨与莲）"
+        text: |
+          "听说很久以前，陈塘关有个孩子。不是普通孩子——从肉球里生出来的。他爹是个当官的，嫌他不正常。后来出了事，他爹要把他交出去抵罪。那孩子倔，说骨头是你给的，还给你就是了。就拿刀把自己的骨头……一根一根……"
+          （祖母搓草绳的手停了一下）
+          "后来怎么了？我忘了。好像是有人把他救了。用莲藕重新捏了一个身子。但没有骨头的人，还算人吗？"
+        echo_variable: knife_choice, nezha_trust
+      - condition: "story_count = 2"
+        title: "故事二（对应Scene 2——天蓬·月与逐）"
+        text: |
+          "天上有个将军。打仗很厉害的那种。但他犯了个错——他爱上了月亮。不是爱上住在月亮上的人，是爱上了月亮本身。天上的规矩不许这样。他们把他赶下来了。赶到哪儿去了？变成了一头猪。"
+          （祖母笑了一声，但笑里没什么高兴的意思）
+          "你说可不可笑。那么大的将军，最后变成一头猪，在泥里拱来拱去。但据说他有时候晚上还是会抬头看月亮。猪也看月亮吗？大概看的吧。"
+        echo_variable: tenpeng_last_words
+        conditional_text:
+          - condition: "tenpeng_last_words = true"
+            addition: "那个将军被赶走的时候，说了一句话。什么话？我忘了。但据说有人听到了。"
+      - condition: "story_count = 3"
+        title: "故事三（对应Scene 3——花果山·石与火）"
+        text: |
+          "你砍柴的那座山再往东走，很远很远的地方，有座山叫花果山。以前那山上住着一群猴子。不是普通猴子——有个猴王，厉害得很。他给自己起了个名号，叫什么来着……"
+          （祖母皱着眉想了半天）
+          "忘了。反正后来天上的人来打了。猴子们死了很多。那座山烧了。猴王被抓走了。那些没死的猴子后来怎么样了？没人知道。可能散了，可能躲起来了。山还在，但猴子不在了。"
+        echo_variable: peach_tree_fate, memory_kept
+      - condition: "story_count = 4"
+        title: "故事四（对应Scene 4——经卷·字与空）"
+        text: |
+          "有个和尚。不是山里敲钟的那种和尚，是真的和尚——读了一辈子经书的那种。他说了一句话，把所有人都吓到了。他说：'真正的经书上什么都没写。'"
+          （祖母停了一会儿）
+          "你说这话什么意思？经书上没字，那还叫经书吗？但他说就是因为什么都没写，所以才是真的。我听不懂。你听得懂吗？"
+        echo_variable: sutra_truth, faith_state
+        conditional_delivery:
+          - condition: "faith_state = 坚定/保持"
+            tone: "语气更笃定：'什么都没写的东西，你往里面看到什么，那就是什么。'"
+          - condition: "faith_state = 崩塌"
+            tone: "语气困惑：'我听不懂。你听得懂吗？'"
+
+  - node_id: S0_grandmother_extra
+    text: |
+      "那座啊……你爷爷年轻的时候就说那山不对劲。说地底下有动静。有人说是龙脉，有人说是矿，有人说山里关着个妖怪。你爷爷不信妖怪那套。他说：'不管关着什么，关了这么久，该放了。'"
+      "后来你爷爷没了。我也老了。那山还在那儿，动静还在那儿。有时候我半夜醒来，觉得整个地面都在轻轻晃。很轻。像是有什么东西在底下翻身。"
+    effect: extra_narrative_unlocked
+    next_node: END_GRANDMOTHER_SCENE
+
+# Insight triggers
+insight_opportunities:
+  - location: S0_grandmother_stories
+    type: dialogue_pre
+    cost: 1_real_purpose
+    reveals: "祖母的每个故事都精确对应一个场景，但叙述方式像一个记忆模糊的老人。"
+  - location: S0_grandmother_story_select
+    type: dialogue_mid
+    cost: 1_behind_dialogue
+    reveals: "幕后：通关后重新审视，每一句都精确对应某个场景的关键时刻。"
+
+# Variable effects
+variable_effects:
+  grandmother_stories:
+    - action: "listen_story"
+      change: +1
+  curiosity_level:
+    - action: "ask_about_mountain"
+      change: +1

@@ -1,0 +1,82 @@
+# Decision Flow: Scene 1 - Decision B (剔骨进行时，你做什么？)
+# Source: /claude/plans/scenes/scene-1-chentangguan/decisions/decision-b.md
+
+decision_id: S1_Decision_B
+decision_name: 剔骨进行时，你做什么？
+scene: scene-1-chentangguan
+phase: 4
+phase_name: 剔骨
+
+context: |
+  哪吒拔出刀。开始剔骨。你教他用的刀法——稳、准、不犹豫。他学得很好。
+  这是核心时刻，见证不可改变的历史。
+
+choices:
+  - id: B1_rush_stop
+    label: 冲上去阻止
+    text: "冲上去"
+    duration: immediate
+    narrative: |
+      你冲上去。被旁边的士兵/百姓拦住。你挣脱不了。
+      但哪吒看到了你。他在剔骨的过程中，目光里多了一样东西。
+    gm_description: |
+      "他没有停手。但他的眼睛不再只盯着李靖了。在最后一块骨头落地之前，
+      他朝你的方向看了一眼。那一眼里有你读不懂的东西——可能是感谢，可能是道歉，
+      也可能只是在确认：有一个人在看着我。"
+    effect: wushi_presence_high
+    variable_impact: wushi_presence = 高
+    echo_preview: "Scene 3中石卵会梦见'一个人站在另一个人旁边'"
+    philosophy_tendency: 冲动
+    insight_opportunity:
+      cost: 1_real_purpose
+      reveals: "哪吒在最后时刻确认'有一个人在看着我'——这是他需要的全部"
+
+  - id: B2_stand_watch
+    label: 站在原地，看着他
+    text: "站着"
+    duration: immediate
+    narrative: |
+      你站着。你知道你阻止不了。但你不走。你的在场本身就是一种表态。
+    gm_description: |
+      "你看着你的学生用你教的刀法，一刀一刀地把自己从父亲身上割下来。
+      他的手很稳。你教的。你突然很后悔教得这么好。"
+    effect: wushi_presence_medium
+    variable_impact: wushi_presence = 中
+    philosophy_tendency: 坚守
+    echo_preview: "Scene 3中渡客会感受到'在旁边'的意义"
+
+  - id: B3_turn_leave
+    label: 转身离开
+    text: "离开"
+    duration: immediate
+    narrative: |
+      你离开了。不是懦弱——你在战场上活到现在，就是因为知道什么时候该走。
+    gm_description: |
+      "你没有回头。但你听到了声音。骨头碎裂的声音。你在战场上听过无数次。
+      但这一次，你知道那是你学生的声音。"
+    effect: wushi_presence_low
+    variable_impact: wushi_presence = 低
+    philosophy_tendency: 回避
+    echo_preview: "Scene 3中某个安静夜晚，渡客会听到风里有骨头碎裂的声音"
+
+# Behind-the-scenes reveal trigger
+behind_the_scenes:
+  trigger: decision_made
+  show: variable_change
+  format: "武师在场度：{old_value} → {new_value}"
+  echo_hint: "这个选择将在未来回响..."
+
+# Variable effects
+variable_effects:
+  wushi_presence:
+    - B1: 高
+    - B2: 中
+    - B3: 低
+  player_philosophy:
+    - B1: 冲动
+    - B2: 坚守
+    - B3: 回避
+  scene2_bonuses:
+    - B1: "阶段三'揭发'选项D20+1"
+    - B2: "阶段四'留在原地'信任检定+1"
+    - B3: "阶段五'离开'叙事色温偏冷"

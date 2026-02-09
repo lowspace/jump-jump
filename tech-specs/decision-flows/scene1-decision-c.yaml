@@ -1,0 +1,54 @@
+# Decision Flow: Scene 1 - Decision C (离开前)
+# Source: /claude/plans/scenes/scene-1-chentangguan/decisions/decision-c.md
+
+decision_id: S1_Decision_C
+decision_name: 离开前
+decision_type: micro_decision
+scene: scene-1-chentangguan
+phase: 5
+phase_name: 余波
+
+context: |
+  你在收拾行李时，在练武场的角落找到了哪吒的练武护腕。
+  他用力太大，护腕总是断，你帮他缝过很多次。
+
+choices:
+  - id: C_take_armguard
+    label: 带走护腕
+    text: "带走"
+    narrative: "你把护腕放进了行囊。"
+    effect: armguard_taken
+    variable_impact: armguard = 带走
+    echo_preview: |
+      这个物件成为闪回触发物。在后续场景（Scene 3或4）的某个关键时刻，
+      玩家角色会在口袋/行囊里摸到一个「不属于自己的东西」，触发一瞬间的既视感。
+    scene3_echo: "石卵在水帘洞深处翻到一块绑带布料，心里浮起'有些东西值得留着'的念头"
+    insight_opportunity:
+      cost: 1_real_purpose
+      reveals: "这个护腕将成为跨场景的物理联结"
+
+  - id: C_leave_armguard
+    label: 不带护腕
+    text: "留下"
+    narrative: "你看了它一眼，然后继续收拾其他东西。"
+    effect: armguard_left
+    variable_impact: armguard = 留下
+    echo_preview: |
+      练武场荒废后，护腕被风沙掩埋。
+    scene0_echo: "Scene 0中，如果樵夫路过一处废墟，可能会看到沙土中露出一角布带。他不知道那是什么。"
+
+# Behind-the-scenes reveal
+behind_the_scenes:
+  trigger: decision_made
+  show: echo_preview
+  format: "这个物件将在未来回响..."
+
+# Variable effects
+variable_effects:
+  armguard:
+    - C_take: 带走
+    - C_leave: 留下
+  scene3_echo:
+    - armguard_taken: "水帘洞额外发现"
+  scene0_echo:
+    - armguard_left: "废墟细节"

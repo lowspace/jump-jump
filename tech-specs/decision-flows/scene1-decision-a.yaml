@@ -1,0 +1,191 @@
+# Decision Flow: Scene 1 - Decision A (你去找谁？)
+# Source: /claude/plans/scenes/scene-1-chentangguan/decisions/decision-a.md
+
+decision_id: S1_Decision_A
+decision_name: 你去找谁？
+scene: scene-1-chentangguan
+phase: 2
+phase_name: 事发
+
+context: |
+  龙宫问罪，海水倒灌城门。李靖正在考虑当众否认哪吒，哪吒此刻不在府中。
+  这是本场景的第一个核心分支。玩家的行动消耗回合。
+
+choices:
+  - id: A1_find_nezha
+    label: 去城外找哪吒
+    description: 城外礁石，哪吒站在海边看着翻涌的海水
+    duration: 2_turns
+    npcs_involved: [nezha]
+    location: 城外海边礁石
+    sub_choices:
+      - id: A1a_persuade_return
+        label: 劝他回去面对
+        text: "回去吧。你爹在想办法。"
+        skill_check: persuasion_DC13
+        success:
+          narrative: "哪吒沉默片刻，跟你回城。但他的表情变得更冷——他已经猜到'想办法'是什么意思。"
+          effect: route_alpha_unlocked
+          next_phase: 3
+        failure:
+          narrative: "'他什么时候为我想过办法？'哪吒不动。你可以继续尝试或改变策略。"
+          effect: can_retry_or_change
+        insight_opportunity:
+          cost: 1_real_purpose
+          reveals: "哪吒内心其实渴望被阻止"
+      - id: A1b_urge_escape
+        label: 劝他跑
+        text: "带上你的东西，走。"
+        effect: trust_minus_1
+        condition_override: "if trust >= 3, no penalty and追加: '你不是这个意思，我知道'"
+        narrative: |
+          哪吒转过头看你。他的眼神里有你没见过的东西——不是愤怒，是失望。
+          "我跑了，陈塘关怎么办？城里的人怎么办？...你也觉得是我的错？"
+      - id: A1c_silent_sit
+        label: 什么都不说，在他旁边坐下
+        text: "（在他旁边坐下）"
+        effect: trust_plus_1
+        narrative: |
+          沉默。风声。海浪。
+          过了很久，哪吒说："师傅教我的那把刀，我一直带着。"
+        hidden: "这是他在间接告诉你：你给他的东西，他在乎"
+        insight_opportunity:
+          cost: 1_real_purpose
+          reveals: "哪吒在间接告诉你他在乎你的教导"
+
+  - id: A2_find_lijing
+    label: 去找李靖
+    description: 李靖书房，正在写信
+    duration: 2_turns
+    npcs_involved: [lijing]
+    location: 李靖书房
+    sub_choices:
+      - id: A2a_persuade_lijing
+        label: 劝李靖不要否认哪吒
+        approach_variants:
+          - approach: emotional
+            text: "他是你的儿子，你不能这样对他。"
+            dc: 16
+            failure_response: "我有一个儿子和一座城。你替我选。"
+          - approach: interest
+            text: "否认亲子，天下人会怎么看李家？你以后还怎么统兵？"
+            dc: 12
+            insight_hint: "诉诸利害会让李靖真正犹豫"
+          - approach: mixed
+            text: "（结合感情与利害）"
+            dc: 14
+        outcomes:
+          - condition: "success_by_5plus"
+            effect: lijing_hesitation_high
+            narrative: "李靖说到'非我李靖之子'时有明显的停顿，手在发抖"
+          - condition: "success"
+            effect: lijing_hesitation_medium
+            narrative: "李靖短暂犹豫，但否认时停顿很短"
+          - condition: "failure"
+            effect: lijing_hesitation_low
+            narrative: "李靖完全不为所动，否认干脆利落"
+          - condition: "failure_by_5plus"
+            effect: wushi_status_reduced
+            narrative: "李靖质疑你的立场：'你是站在他那边？你忘了谁给你饭吃？'"
+        insight_opportunity:
+          cost: 1_real_purpose
+          reveals: "诉诸感情DC16（极难），诉诸利害DC12（中等）"
+      - id: A2b_reveal_location
+        label: 如实回答哪吒的位置
+        text: "他在城外海边。"
+        effect: lijing_trust_plus, nezha_unprepared
+        narrative: "李靖派人去找。你获得了李靖的信任，但哪吒被带回时毫无准备。"
+      - id: A2c_hide_location
+        label: 隐瞒哪吒的位置
+        text: "我不知道。练完拳他就走了。"
+        skill_check: deception_DC11
+        success:
+          effect: time_window_opened
+          narrative: "李靖信了，派别人去找。你获得了时间窗口。"
+        failure:
+          effect: lijing_suspicious, wushi_status_reduced
+          narrative: "李靖看穿了你：'你在帮他？'信任崩塌。"
+
+  - id: A3_among_crowd
+    label: 去城中百姓里
+    description: 陈塘关街市，百姓聚集在城隍庙前
+    duration: 1_turn
+    npcs_involved: [crowd]
+    location: 陈塘关街市
+    insight_opportunity: true
+    sub_choices:
+      - id: A3a_defend_nezha
+        label: 为哪吒辩护
+        skill_check: persuasion_DC14
+        success:
+          effect: crowd_attitude_mild
+          narrative: "部分百姓动摇。有人说'那孩子平时也没害过人……'"
+        failure:
+          effect: crowd_anger_increased
+          narrative: "'你是李府的人，当然帮他说话！'人群更加愤怒。"
+      - id: A3b_organize_evacuation
+        label: 组织撤离
+        skill_check: organization_DC10
+        success:
+          effect: casualties_reduced
+          narrative: "帮助部分老弱妇孺转移到高处。不能改变大局，但减少了伤亡。"
+        failure:
+          narrative: "人群太慌乱，你的声音被淹没。"
+      - id: A3c_listen_hidden
+        label: 混在人群中倾听
+        effect: information_gathered
+        narrative: "听到各种传闻，其中一条可能有用：东边来了个年轻人，带着条黑狗。"
+        hidden_info: "杨戬的伏笔"
+        insight_opportunity:
+          cost: 1_real_purpose
+          reveals: "'年轻人带黑狗'——这是杨戬的伏笔，满足条件时杨戬会出现"
+
+  - id: A4_temple_visit
+    label: 去城隍庙
+    description: 城隍庙内，庙祝正在收拾祭品
+    duration: 1_turn
+    npcs_involved: [miaozhu]
+    location: 城隍庙
+    sub_choices:
+      - id: A4a_ask_fate
+        label: 询问哪吒的命数
+        skill_check: insight_DC13
+        success:
+          effect: unlock_scene4_bonus
+          narrative: "庙祝犹豫后说：'那孩子的命……不在封神榜上。不属于这里，也不属于那里。'"
+          echo: "Scene 4相关检定-1 DC"
+        failure:
+          narrative: "庙祝摇头：'天机不可泄露。'"
+      - id: A4b_pray
+        label: 为哪吒祈福
+        text: "不询问，只是点灯。"
+        effect: trust_plus_1_delayed
+        narrative: "庙祝看着你，叹息：'他不需要神佛的保佑。他需要的是……'没说完，摇摇头。"
+        hidden: "如果后续哪吒得知，信任度+1"
+      - id: A4c_observe_others
+        label: 观察庙中其他人
+        effect: intel_gathered
+        narrative: "发现几个便装的天庭密探正在记录来往香客。"
+        hidden: "获得情报：天庭已经介入，时间比想象中紧迫。"
+
+# Decision-level insight triggers
+insight_triggers:
+  - location: S1_Decision_A
+    type: decision_pre
+    cost: 1_real_purpose
+    reveals: "三个方向各有优劣：找哪吒建立信任，找李靖影响犹豫度，找百姓获取信息"
+
+# Variable effects summary
+variable_effects:
+  nezha_trust:
+    - A1c: +1
+    - A1b_with_low_trust: -1
+  lijing_hesitation:
+    - A2a_success_by_5plus: high
+    - A2a_success: medium
+    - A2a_failure: low
+  yangjian_triggered:
+    - A3c: "满足条件之一"
+  crowd_attitude:
+    - A3a_success: mild
+    - A3a_failure: angry

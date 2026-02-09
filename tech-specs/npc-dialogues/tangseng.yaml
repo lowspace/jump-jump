@@ -1,0 +1,77 @@
+# NPC Dialogue Configuration: Tang Seng (Scene 4 - Lingtai)
+# Source: /claude/plans/scenes/scene-4-lingtai/npcs/tangseng.md
+
+npc_id: tangseng_s4
+name: 唐僧/玄奘
+trigger_type: conditional
+scene: scene-4-lingtai
+description: 取经人，微光属性的化身
+
+trigger_conditions:
+  - "玩家在特定时刻出现在特定地点（深夜抄经、后山散步、院中发呆）"
+  - "玩家累计探索度达到一定阈值"
+
+trigger_logic: OR
+
+initial_state:
+  knowledge: full  # Knows the truth about the pilgrimage
+  attitude: equal_peer  # Not master to disciple, but "two people who believe"
+  response_type: questions_only  # Never gives answers, only asks questions
+
+# Core behavior rule
+core_behavior:
+  max_lines: 5
+  all_questions: true
+  never_identifies: true  # Only says "a person going far away"
+
+# Hidden intent
+hidden_intent:
+  core: "知道取经是政治行为，但选择走这条路——路上的经历比终点的经文更真实"
+  surface_mask: "平等的僧人、问问题的人"
+  insight_reveal_text: "唐僧是'在虚无面前仍然选择行走'的活证据。"
+
+dialogue_nodes:
+  - node_id: S4_tangseng_encounter
+    trigger: condition_met
+    phase: varies
+    text: "你抄经的时候，心里想的是什么？"
+    context: "偶遇，唐僧以平等僧人身份交谈"
+    note: "最多五句台词，每一句都必须是问句"
+    possible_questions:
+      - "你抄经的时候，心里想的是什么？"
+      - "你觉得佛需要你的字写得好看吗？"
+      - "如果有一天你发现经上写的和你信的不一样，你信经还是信自己？"
+    player_response_behavior:
+      - id: ask_identity
+        text: "你是谁？"
+        response: "一个要出远门的人。"
+      - id: ask_destination
+        text: "你去哪里？"
+        response: "西边。"
+      - id: ask_why
+        text: "为什么？"
+        response: "（沉默，然后用问题回应）"
+    effect: tangseng_encounter_recorded, micro_light_activated
+    echo_foreshadowing: "Scene 0中，行者会出现"
+
+# Insight triggers
+insight_opportunities:
+  - location: S4_tangseng_encounter
+    type: dialogue_pre
+    cost: 1_real_purpose
+    reveals: "唐僧知道取经的真相——经文本身不重要，这是一场被设计好的意识形态扩张行动。"
+  - location: S4_tangseng_encounter
+    type: dialogue_mid
+    cost: 1_behind_dialogue
+    reveals: "幕后：唐僧选择走这条路，不是因为盲信，而是因为他相信：路上的经历比终点的经文更真实。"
+
+# Variable effects
+variable_effects:
+  tangseng_encounter:
+    - action: "met"
+      value: true
+    - action: "dialogue_depth"
+      value: 1_to_3  # Based on how many questions exchanged
+  scene0_echo:
+    - action: "tangseng_met"
+      effect: "Scene 0行者出现"

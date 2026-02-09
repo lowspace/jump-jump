@@ -1,0 +1,50 @@
+# Decision Flow: Scene 4 - Decision A (如何处理空白经卷？)
+# Source: /claude/plans/scenes/scene-4-lingtai/decisions/decision-a.md
+
+decision_id: S4_Decision_A
+decision_name: 如何处理空白经卷？
+scene: scene-4-lingtai
+phase: 1
+phase_name: 发现
+
+context: |
+  出现于阶段一。法明在抄经时发现了空白经卷。
+
+choices:
+  - id: A1_skip
+    label: 跳过，抄下一卷
+    narrative: "法明把空白经卷放回原处，拿起下一卷。"
+    effect: safe_choice
+    variable_impact: sutra_discovery = 延迟
+    hidden: "安全选择。法明继续正常工作，但心里留下了一个疑问。阶段二中异常发现的时间窗口缩短。"
+
+  - id: A2_hide_study
+    label: 把空白经卷藏起来，私下研究
+    narrative: "法明将空白经卷夹在自己的铺盖下面。"
+    effect: risky_choice, has_physical_evidence
+    variable_impact: sutra_discovery = 立即且有证据
+    hidden: "冒险选择。进入阶段二时拥有物证，但如果被监院发现会被训斥。"
+    insight_opportunity:
+      cost: 1_real_purpose
+      reveals: "拥有物证会在后续对峙中提供优势，但也带来风险"
+
+  - id: A3_public_question
+    label: 当众提出疑问
+    text: "有人遇到过空白底本吗？"
+    narrative: "法明在抄经房里向所有人提问。"
+    effect: radical_choice, attention_gained
+    variable_impact: sutra_discovery = 公开
+    hidden: |
+      抄经房陷入短暂沉默。没人回答。
+      慧空的笔尖在纸上划出了一道墨痕——他在你问出口的瞬间手抖了一下。
+      监院会在当天找你谈话。
+    consequence: "监院当天找你谈话"
+
+# Variable effects
+variable_effects:
+  sutra_discovery:
+    - A1: 延迟
+    - A2: 立即且有证据
+    - A3: 公开
+  jianyuan_attention:
+    - A3: 立即

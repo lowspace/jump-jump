@@ -1,0 +1,125 @@
+# Decision Flow: Scene 2 - Decision D (灵蕴账目——你怎么处置？)
+# Source: /claude/plans/scenes/scene-2-tianhe/decisions/decision-d.md
+
+decision_id: S2_Decision_D
+decision_name: 灵蕴账目——你怎么处置？
+scene: scene-2-tianhe
+phase: 5
+phase_name: 终极决策
+
+context: |
+  阶段五触发。这是本场景的终极决策。
+
+choices:
+  - id: D1_expose
+    label: 揭发：向卷帘大将提交完整报告
+    text: "决定把你发现的一切写成报告，直接提交给卷帘大将的副官。"
+    motivation_options:
+      - "职责所在（这是你的工作——发现异常就该上报）"
+      - "不安驱动（你无法忍受知道真相却假装不知道的感觉）"
+      - "策略考量（趁天蓬事件的混乱，把灵蕴的事一并捅出去，也许能立功）"
+    skill_check: investigation_DC12
+    success:
+      narrative: "报告写得无懈可击。数据、时间线、流向分析，全部清晰。"
+    failure:
+      narrative: "报告有漏洞。数据不完整，论证不充分。报告仍然提交，但可能被当作'小吏的臆测'忽略。"
+    fate_check: fate_DC13
+    fate_outcomes:
+      - condition: "success_by_5plus"
+        result: 揭发后的隔离保护
+        narrative: |
+          报告引起了足够高层的注意。灵蕴转账的事被要求彻查。
+          你作为发现者被「保护性隔离」——暂时安全，但你的名字进入了某些人的黑名单。
+          你的职位被撤销，被调到一个不接触任何敏感信息的闲职——实际上是终生监控。
+      - condition: "success"
+        result: 被忽略的幸运
+        narrative: |
+          报告被接收，但被「留档备查」——官僚体系的标准冷处理。
+          没有人公开追查，但信息已经进入了系统。你暂时安全。
+      - condition: "failure"
+        result: 被流放
+        narrative: |
+          报告被截留了。你不知道被谁截留的，但第二天你的办公桌上多了一份调令——
+          你被调离灵蕴核算司，理由是「编制优化」。
+          你的新岗位在天庭最偏远的一个辖区，负责管理一座没有香客的废弃庙宇的灵蕴账目。
+      - condition: "failure_by_5plus"
+        result: 消失
+        narrative: |
+          你提交报告的当晚，有人来了。不是卷帘大将，是几个你不认识的人。
+          他们很客气，但他们的眼神让你的第七窍剧烈地震动。
+          他们带你走了。你不知道去哪。
+          陆执的命运留白——后续场景中可能以碎片化信息暗示他的下落。
+    variable_impact:
+      ledger_choice: 揭发
+      survival_method: "根据fate_check结果"
+    philosophy_tendency: 真相优先
+
+  - id: D2_hide
+    label: 隐瞒：销毁你发现的痕迹
+    text: "决定把一切埋起来。"
+    narrative: |
+      你把翻阅过的往期账目放回原处，把你做的交叉对比笔记烧掉，
+      把西域通道的流水账合上，假装今天只是普通的一天。
+    skill_check: deception_DC11
+    success:
+      narrative: "你的调阅记录被悄悄修改了。没有人知道你深入查过什么。"
+      effect: juanlian_suspicion_minus1
+    failure:
+      narrative: "你在修改调阅记录时留下了更明显的痕迹——修改本身就是异常行为。"
+      effect: juanlian_suspicion_plus1
+    aftermath_gm_description: |
+      "你合上账本。你把笔记烧了。你坐在空荡荡的办公间里，看着天河的水在窗外流。
+      你做了最安全的选择。你活着。你明天还会来上班，后天也会，大后天也会。
+      你会继续算那些数字。加减乘除。对了就是对了。
+      但你的胸腔里有一个东西在叫。它不疼，不痒，它只是在那里。
+      它让你觉得——空气里少了点什么。或者多了点什么。你说不清。
+      你从来不知道这叫什么。（如果你还有完整的心窍，你会知道——这叫'良心不安'。
+      但你的第七窍只给了你'不安'的感觉，没给你词汇。）"
+    variable_impact:
+      ledger_choice: 隐瞒
+      survival_method: 沉默
+      seventh_aperture_awareness: 觉醒中
+    hidden: "陆执开始隐约意识到自己的'不安感'不是正常的，但他还不知道那是第七窍"
+    philosophy_tendency: 安全优先
+
+  - id: D3_partial
+    label: 部分揭露：留一份副本，但不立即提交
+    text: "选择了一条中间路线。"
+    narrative: "你把关键数据抄录了一份副本，藏在只有你知道的地方。你不提交报告——至少不是现在。但你也不销毁证据。你留了一手。"
+    skill_checks:
+      - check: deception_DC12
+        purpose: 把副本藏好，不被发现
+        success: "副本被你藏在天河边核算司后墙的一块松动的砖缝里。没有人知道。"
+        failure: "你藏的时候被人看到了。不确定是谁——可能是钟鹤，也可能只是一个路过的清洁工。"
+        failure_effect: juanlian_suspicion_plus2
+      - check: investigation_DC10
+        purpose: 抄录时确保数据完整
+        success: "副本完整，包含了所有关键数据和你的分析。"
+        failure: "副本不完整。你在紧张中漏抄了一些关键数字。"
+    variable_impact:
+      ledger_choice: 部分揭露
+      survival_method: 留了后手的沉默
+    philosophy_tendency: 两全尝试
+    insight_opportunity:
+      cost: 1_real_purpose
+      reveals: "这个选择给了未来可能性——可以选择把证据拿出来，或者永远不拿出来"
+
+# Variable effects
+variable_effects:
+  ledger_choice:
+    - D1: 揭发
+    - D2: 隐瞒
+    - D3: 部分揭露
+  survival_method:
+    - D1_great_success: 揭发后的隔离保护
+    - D1_success: 被忽略的幸运
+    - D1_failure: 被流放
+    - D1_catastrophe: 消失
+    - D2: 沉默
+    - D3: 留了后手的沉默
+  seventh_aperture_awareness:
+    - D2: 觉醒中
+  scene2_philosophy:
+    - D1: 真相优先
+    - D2: 安全优先
+    - D3: 两全尝试

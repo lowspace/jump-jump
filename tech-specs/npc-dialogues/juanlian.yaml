@@ -1,0 +1,138 @@
+# NPC Dialogue Configuration: Juanlian (Scene 2 - Tianhe)
+# Source: /claude/plans/scenes/scene-2-tianhe/npcs/juanlian.md
+
+npc_id: juanlian_s2
+name: 卷帘大将
+scene: scene-2-tianhe
+description: 天庭安全系统核心执行者，灵霄殿卷帘大将
+
+initial_state:
+  suspicion_level: 0  # 0-10 scale
+  attitude_to_player: neutral_observant
+  passive_insight: 5  # +5 passive insight modifier
+
+# Hidden intent
+hidden_intent:
+  core: "执行职责，但内心对天蓬有最微弱的犹豫"
+  surface_mask: "公事公办、礼貌但不温暖"
+  insight_reveal_text: "卷帘大将知道天蓬和阿月的事很久以前就知道了。他的'延迟上报'是他职业生涯唯一一次偏离标准流程。"
+
+# Passive ability
+passive_ability:
+  name: "永远在观察"
+  description: "卷帘大将不需要主动检定，他永远在观察"
+  effect: "当陆执在卷帘面前进行欺骗检定时，DC基于D20+5对抗"
+
+dialogue_nodes:
+  # Phase 3: The Questioning
+  - node_id: S2_juanlian_questioning
+    trigger: phase_3_start
+    phase: 3
+    text: "最近的账目有没有异常？"
+    context: "卷帘大将突然出现在灵蕴核算司"
+    note: "这是一个陷阱问题，无论怎么回答都有风险"
+    player_options:
+      - id: B1_truth
+        text: "有。西域通道有大额灵蕴流出，标注'灵山转'，审批流程不完整。"
+        effect: juanlian_suspicion_unchanged  # He already knew
+        next_node: S2_juanlian_followup_trap
+      - id: B2_lie
+        text: "账目正常，没有发现异常。"
+        skill_check: deception_DC16_vs_juanlian
+        success_effect: juanlian_suspicion_plus1
+        success_next: S2_juanlian_skeptical
+        failure_effect: juanlian_suspicion_plus3
+        failure_next: S2_juanlian_threatens
+      - id: B3_vague
+        text: "有些数字我还没核对完，需要更多时间确认。"
+        skill_check: deception_DC13_vs_juanlian
+        success_effect: juanlian_suspicion_plus1
+        success_next: S2_juanlian_accepts_delay
+        failure_effect: juanlian_suspicion_plus2
+        failure_next: S2_juanlian_presses
+
+  - node_id: S2_juanlian_followup_trap
+    text: "你发现这个异常之后，报告了谁？"
+    context: "第二个陷阱"
+    player_options:
+      - id: B1a_reported_xuanming
+        text: "报告了宣明主管。"
+        effect: xuanming_implicated, juanlian_suspicion_reduced
+        next_node: END_QUESTIONING
+      - id: B1b_not_yet_reported
+        text: "还没来得及报告，正在核实。"
+        skill_check: deception_DC14_vs_juanlian
+        success_effect: juanlian_suspicion_unchanged
+        failure_effect: juanlian_suspicion_plus2
+        next_node: END_QUESTIONING
+      - id: B1c_about_to_report
+        text: "我今天刚发现，正准备写报告。"
+        skill_check: deception_DC12_vs_juanlian
+        success_effect: juanlian_suspicion_unchanged, report_delayed
+        failure_effect: juanlian_suspicion_plus1
+        next_node: END_QUESTIONING
+
+  - node_id: S2_juanlian_skeptical
+    text: "..."
+    context: "卷帘大将看了你三秒，然后移开视线"
+    effect: juanlian_suspicion_plus1
+    next_node: END_QUESTIONING
+
+  - node_id: S2_juanlian_threatens
+    text: "想清楚。"
+    context: "沉默的五秒，目光像开骨刀"
+    effect: juanlian_suspicion_plus3, player_marked_for_review
+    next_node: END_QUESTIONING
+
+  - node_id: S2_juanlian_accepts_delay
+    text: "..."
+    context: "卷帘大将微微点头"
+    effect: juanlian_suspicion_plus1
+    next_node: END_QUESTIONING
+
+  - node_id: S2_juanlian_presses
+    text: "什么数字需要这么长时间确认？"
+    context: "追问"
+    player_options:
+      - id: specify
+        text: "（具体说明）"
+        next_node: S2_juanlian_followup_trap
+      - id: remain_vague
+        text: "（继续模糊）"
+        skill_check: deception_DC15_vs_juanlian
+        next_node: END_QUESTIONING
+
+  # Phase 4: After Tianpeng's Fall
+  - node_id: S2_juanlian_aftermath
+    trigger: phase_4_after_tianpeng
+    phase: 4
+    text: ""
+    context: "天蓬被押走后，卷帘大将站在原地多看了一眼"
+    note: "这一眼比任何言语都更能说明他内心残存的东西"
+    effect: juanlian_humanity_hint
+    hidden: "他内心残存的东西——对同僚的最微弱犹豫"
+
+# Insight triggers
+insight_opportunities:
+  - location: S2_juanlian_questioning
+    type: dialogue_pre
+    cost: 1_real_purpose
+    reveals: "卷帘大将的观察修正值为+5。他不需要主动检定——他永远在观察。"
+  - location: S2_juanlian_aftermath
+    type: dialogue_mid
+    cost: 1_behind_dialogue
+    reveals: "幕后：卷帘大将知道天蓬和阿月的事很久了。他的'延迟上报'是他职业生涯唯一一次偏离标准流程。"
+
+# Variable effects
+variable_effects:
+  juanlian_suspicion:
+    - action: "B2_lie_success"
+      change: +1
+    - action: "B2_lie_failure"
+      change: +3
+    - action: "B3_vague_success"
+      change: +1
+    - action: "B3_vague_failure"
+      change: +2
+    - action: "B1b_not_yet_failure"
+      change: +2

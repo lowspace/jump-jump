@@ -1,0 +1,74 @@
+# Decision Flow: Scene 0 - Decision A (石壁字迹)
+# Source: /claude/plans/scenes/scene-0-wuzhishan/decisions/decision-a.md
+
+decision_id: S0_Decision_A
+decision_name: 石壁字迹
+scene: scene-0-wuzhishan
+phase: 1
+phase_name: 上山
+
+context: |
+  少年靠近一面半遮在藤蔓后的岩壁。拨开藤蔓后，石面上有四个字的刻痕。
+  字迹被风雨侵蚀得只剩轮廓，但隐约能看出笔画——每一笔都刻得极深。
+
+prerequisite: |
+  D20 + 洞察检定 DC12:
+  - 成功：辨认出"齐天大圣"
+  - 失败：只能看出是四个字，认不出来
+
+choices:
+  - id: A1_trace
+    label: 描下来
+    text: "找一块较软的石头，把字迹的轮廓描在自己的柴刀鞘上"
+    effect: wall_inscription_traced, curiosity_plus1
+    variable_impact:
+      wall_inscription: 描下
+      curiosity_level: +1
+    echo_preview: "少年在后续回合中会反复看刀鞘上的痕迹。这个动作在'重新渲染'中意义重大。"
+
+  - id: A2_study
+    label: 试图辨认
+    text: "蹲在石壁前仔细研究，用手指沿着笔画摸"
+    effect: wall_inscription_studied, curiosity_plus1
+    variable_impact:
+      wall_inscription: 辨认
+      curiosity_level: +1
+    skill_check: perception_DC14
+    success:
+      narrative: "少年指尖触碰字迹时感到一阵微弱的温热，像是石头内部有什么在回应他的触摸。"
+      effect: wukong_connection_felt
+    failure:
+      narrative: "什么都没感觉到。"
+
+  - id: A3_ignore
+    label: 忽略
+    text: "看了一眼就走了。山上奇怪的东西多了去了"
+    effect: wall_inscription_ignored
+    variable_impact: wall_inscription = 忽略
+    hidden: "少年错过了一个与悟空'隔山感应'的机会。"
+
+  - id: A4_erase
+    label: 抹掉
+    text: "用柴刀刮掉字迹。山上的东西越少越好"
+    effect: wall_inscription_erased_attempt, curiosity_minus1
+    variable_impact:
+      wall_inscription: 抹掉
+      curiosity_level: -1
+    skill_check: strength_DC8
+    success:
+      narrative: "字迹刻得太深，你只刮掉了表面，轮廓依然在。"
+    failure:
+      narrative: "完全刮不动。"
+    hidden: "无论成功失败，你都有一瞬间觉得不应该这么做。"
+
+# Variable effects
+variable_effects:
+  wall_inscription:
+    - A1: 描下
+    - A2: 辨认
+    - A3: 忽略
+    - A4: 抹掉
+  curiosity_level:
+    - A1: +1
+    - A2: +1
+    - A4: -1

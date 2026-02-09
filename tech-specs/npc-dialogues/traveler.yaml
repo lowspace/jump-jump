@@ -1,0 +1,81 @@
+# NPC Configuration: Traveler (Scene 0 - Wuzhishan)
+# Source: /claude/plans/scenes/scene-0-wuzhishan/npcs/traveler.md
+
+npc_id: traveler_s0
+name: 路过的行者
+trigger_type: conditional
+scene: scene-0-wuzhishan
+description: 沉默的旅人，唐僧即将到来的前兆
+
+trigger_conditions:
+  - "少年在山上累计停留时间 >= 4回合"
+  - "curiosity_level = 高"
+
+trigger_logic: OR
+
+initial_state:
+  identity: tang_seng_premonition  # This is Tang Sen before the journey
+  destination: west
+  attitude: peaceful_determined
+
+# Core constraint
+core_constraint: "这个角色最多说一句话。如果玩家追问，他只会停下来看一眼，微微点头，然后继续走。"
+
+dialogue_nodes:
+  - node_id: S0_traveler_encounter
+    trigger: condition_met
+    phase: 3
+    text: "多谢。但我走的路，不需要通。"
+    context: "少年下山路上遇到一个穿灰色僧袍的年轻人，背着小包袱"
+    note: "脚步很稳，不快不慢，像是走了很远的路，还要走很远的路"
+    player_options:
+      - id: ask_destination
+        text: "你去哪里？"
+        response: "西边。"
+        next_node: S0_traveler_west
+      - id: ask_why
+        text: "西边有什么？"
+        response: "也许什么都没有。但不走过去，谁知道呢。"
+        next_node: END_TRAVELER_SCENE
+      - id: silent_watch
+        text: "（目送他离开）"
+        effect: encounter_recorded
+        next_node: END_TRAVELER_SCENE
+
+  - node_id: S0_traveler_west
+    text: "西边。"
+    context: "简短回答"
+    player_options:
+      - id: ask_more
+        text: "西边有什么？"
+        response: "也许什么都没有。但不走过去，谁知道呢。"
+        next_node: END_TRAVELER_SCENE
+      - id: let_go
+        text: "（不再追问）"
+        next_node: END_TRAVELER_SCENE
+
+  - node_id: END_TRAVELER_SCENE
+    text: "（行者继续走了，消失在山路拐角）"
+    effect: traveler_encounter_recorded
+    echo_foreshadowing: "Scene 4完成后，'重新渲染'中会获得全新含义"
+    hidden: "这是唐僧，取经出发前。他的存在暗示：有人正在朝这座山走来。"
+
+# Insight triggers
+insight_opportunities:
+  - location: S0_traveler_encounter
+    type: dialogue_pre
+    cost: 1_real_purpose
+    reveals: "行者的脸上有一种少年看不懂的表情——不是坚定，不是迷茫，而是'知道前面没有路还要走'的某种东西。"
+  - location: S0_traveler_encounter
+    type: dialogue_mid
+    cost: 1_behind_dialogue
+    reveals: "幕后：这是唐僧，取经出发前。他的存在暗示——有人正在朝这座山走来。"
+
+# Variable effects
+variable_effects:
+  traveler_encounter:
+    - action: "met"
+      value: true
+  scene4_echo:
+    - action: "traveler_met"
+      effect: "Scene 4完成后重新渲染时获得新含义"

@@ -1,0 +1,64 @@
+# NPC Dialogue Configuration: Tianpeng (Scene 2 - Tianhe)
+# Source: /claude/plans/scenes/scene-2-tianhe/npcs/tianpeng.md
+
+npc_id: tianpeng_s2
+name: 天蓬元帅
+scene: scene-2-tianhe
+description: 天庭水军统帅，天河八万水军统领
+
+initial_state:
+  emotional_state: resigned_defiance  # Knows his fate, accepts it
+  awareness_of_player: none  # Initially doesn't notice Lu Zhi
+  last_words_spoken: false
+
+# Hidden intent
+hidden_intent:
+  core: "想光明正大地爱阿月，哪怕代价是一切"
+  surface_mask: "从容、挑衅、不需要同情"
+  insight_reveal_text: "天蓬不是悲剧英雄，他是一个自私的人做了一个伟大的选择。他的心窍关于'爱'奇迹般地残留了。"
+
+dialogue_nodes:
+  # Phase 4: The Fall
+  - node_id: S2_tianpeng_fall
+    trigger: phase_4_start
+    phase: 4
+    text: ""
+    context: "天蓬被押解经过，这是固定事件，不可改变"
+    note: "天蓬被贬是固定事件，玩家无法阻止"
+    conditional_interaction:
+      - condition: "player_chose_help OR player_present_at_key_moment"
+        text: "天蓬在被押解经过时，看了陆执一眼。然后他说：'阿月。'只有陆执听到了。"
+        effect: tenpeng_last_words_true
+        hidden: "这是天蓬最后的话，关于阿月"
+      - condition: "player_absent OR player_chose_avoid"
+        text: "天蓬被押解经过，没有看任何人。"
+        effect: tenpeng_last_words_false
+
+  - node_id: S2_tianpeng_final_words
+    trigger: player_present
+    phase: 4
+    text: "阿月。"
+    context: "被押解经过时，只有陆执能听到"
+    effect: tenpeng_last_words_true
+    echo_foreshadowing: "Scene 0中，祖母讲故事二时会多一句：'那个将军被赶走的时候，说了一句话...'"
+    next_node: END_TIANPENG_SCENE
+
+# Insight triggers
+insight_opportunities:
+  - location: S2_tianpeng_fall
+    type: dialogue_mid
+    cost: 1_real_purpose
+    reveals: "天蓬知道天庭和灵山之间有灵蕴交易。他不在乎，因为他只在乎阿月。"
+  - location: S2_tianpeng_final_words
+    type: dialogue_mid
+    cost: 1_behind_dialogue
+    reveals: "幕后：天蓬故意让人发现他和阿月的关系。他受够了偷偷摸摸。"
+
+# Variable effects
+variable_effects:
+  tenpeng_last_words:
+    - action: "player_heard"
+      value: true
+  scene0_echo:
+    - action: "tenpeng_last_words_true"
+      effect: "Scene 0祖母故事二增加台词"

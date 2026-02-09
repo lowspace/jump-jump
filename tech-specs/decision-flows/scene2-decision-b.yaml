@@ -1,0 +1,94 @@
+# Decision Flow: Scene 2 - Decision B (你怎么回答？)
+# Source: /claude/plans/scenes/scene-2-tianhe/decisions/decision-b.md
+
+decision_id: S2_Decision_B
+decision_name: 你怎么回答？
+scene: scene-2-tianhe
+phase: 3
+phase_name: 质问
+
+context: |
+  阶段三触发。卷帘大将问你：「最近的账目有没有异常？」
+  这是一个陷阱问题。
+
+choices:
+  - id: B1_truth
+    label: 如实回答「有异常」
+    text: "有。西域通道有大额灵蕴流出，标注'灵山转'，审批流程不完整。"
+    narrative: "卷帘大将点头。他的表情没有变化——你说出了他已经知道的事。"
+    follow_up: "你发现这个异常之后，报告了谁？"
+    note: "这是第二个陷阱"
+    sub_choices:
+      - id: B1a_reported_xuanming
+        label: 「报告了宣明主管」
+        effect: xuanming_implicated, juanlian_suspicion_reduced
+        hidden: "宣明被牵入调查。你暂时安全，但宣明会记住你把他拉下水了。"
+      - id: B1b_not_yet_reported
+        label: 「还没来得及报告，正在核实」
+        skill_check: deception_DC14_vs_juanlian
+        success:
+          effect: juanlian_suspicion_unchanged
+          narrative: "卷帘大将接受了这个解释。"
+        failure:
+          effect: juanlian_suspicion_plus2
+          narrative: "他看出你在拖延时间。"
+      - id: B1c_about_to_report
+        label: 「我今天刚发现，正准备写报告」
+        skill_check: deception_DC12_vs_juanlian
+        success:
+          effect: juanlian_suspicion_unchanged, report_delayed
+          narrative: "卷帘大将微微点头，'写好后直接交给我的副官。'"
+        failure:
+          effect: juanlian_suspicion_plus1
+
+  - id: B2_lie
+    label: 说谎「没有异常」
+    text: "账目正常，没有发现异常。"
+    skill_check: deception_DC16_vs_juanlian
+    success:
+      narrative: "卷帘大将在你脸上看了三秒。然后移开了视线。他没有追问。但你不知道他信了还是只是在等。"
+      effect: juanlian_suspicion_plus1
+      variable_impact: ledger_choice = 隐瞒
+    failure:
+      narrative: |
+        卷帘大将没有说话。他只是继续看着你。沉默持续了五秒——
+        在那五秒里，你感觉到他的目光像一把开骨刀。
+        然后他说了一句："想清楚。"
+      effect: juanlian_suspicion_plus3, player_marked_for_review
+      hidden: "你被标记为'待复查'对象"
+    insight_opportunity:
+      cost: 1_real_purpose
+      reveals: "卷帘大将的被动洞察修正值为+5，他永远在观察"
+
+  - id: B3_vague
+    label: 模糊回答
+    text: "有些数字我还没核对完，需要更多时间确认。"
+    skill_check: deception_DC13_vs_juanlian
+    success:
+      narrative: "不偏不倚的回答。卷帘大将接受了'核实中'的说法。"
+      effect: juanlian_suspicion_plus1
+    failure:
+      narrative: "卷帘大将微微偏头：'什么数字需要这么长时间确认？'"
+      effect: forced_to_specify_or_continue_vague
+      player_options:
+        - id: specify
+          text: "具体说明"
+          next_node: B1_truth
+        - id: continue_vague
+          text: "继续模糊"
+          skill_check: deception_DC15_vs_juanlian
+
+# Variable effects
+variable_effects:
+  juanlian_suspicion:
+    - B1a: reduced
+    - B1b_success: unchanged
+    - B1b_failure: +2
+    - B1c_success: unchanged
+    - B1c_failure: +1
+    - B2_success: +1
+    - B2_failure: +3
+    - B3_success: +1
+    - B3_failure: forced_escalation
+  ledger_choice:
+    - B2_success: 隐瞒

@@ -1,0 +1,148 @@
+# NPC Dialogue Configuration: Laohou (Scene 3 - Huaguoshan)
+# Source: /claude/plans/scenes/scene-3-huaguoshan/npcs/laohou.md
+
+npc_id: laohou_s3
+name: 老猴
+scene: scene-3-huaguoshan
+description: 花果山最年长的猴子，活过两个时代的记忆
+
+initial_state:
+  fear_level: high  # High fear, wants survival
+  attitude_to_wukong: conflicted_guilt  # Guilty about not stopping Wukong
+  attitude_to_player: mentoring  # Sees player as "still teachable"
+
+# Hidden intent
+hidden_intent:
+  core: "让猴群活下来，同时背负着没阻止悟空的愧疚"
+  surface_mask: "现实、谨慎、保存实力"
+  insight_reveal_text: "老猴曾经劝过悟空不要去天宫。他没敢再劝，因为悟空说得对——他确实怕。"
+
+dialogue_nodes:
+  # Phase 3: Monkey Meeting
+  - node_id: S3_laohou_meeting_argue
+    trigger: phase_3_meeting
+    phase: 3
+    text: "大王在的时候我们活得好，大王不在了我们还得活。"
+    context: "老猴与铁头争吵，主张散伙保命"
+    signature_line: "大王在的时候我们活得好，大王不在了我们还得活。"
+    player_options:
+      - id: support_laohou
+        text: "老猴哥说得对。活下来最重要。"
+        effect: laohou_relief, monkey_unity_drift_apart, iron_head_disappointed
+        next_node: S3_laohou_relieved
+      - id: support_iron_head
+        text: "大王的东西不能丢。"
+        effect: laohou_shakes_head, monkey_unity_split
+        next_node: S3_laohou_sighs
+      - id: propose_third_way
+        text: "（提出第三条路，如移植桃树）"
+        skill_check: persuasion_DC14
+        success_effect: both_listen, unlock_transplant_option
+        success_next: S3_laohou_considers
+        failure_effect: dismissed_as_overthinking
+        failure_next: S3_laohou_patronizing
+      - id: admit_uncertainty
+        text: "我不知道。"
+        effect: honesty_remembered, stalemate_continues
+        next_node: S3_laohou_nods
+
+  - node_id: S3_laohou_relieved
+    text: "（闭上眼睛，点了点头）"
+    effect: laohou_trust_plus
+    next_node: END_MEETING
+
+  - node_id: S3_laohou_sighs
+    text: "（摇头，叹了一口气）"
+    effect: laohou_trust_minus
+    next_node: END_MEETING
+
+  - node_id: S3_laohou_considers
+    text: "种到哪里？"
+    context: "老猴第一次认真考虑第三条路"
+    effect: transplant_option_unlocked
+    next_node: END_MEETING
+
+  - node_id: S3_laohou_patronizing
+    text: "你们年轻的，想得太多了。"
+    effect: dismissed
+    next_node: END_MEETING
+
+  - node_id: S3_laohou_nods
+    text: "..."
+    context: "没有人怪你——因为没有人知道正确答案"
+    effect: honesty_remembered
+    next_node: END_MEETING
+
+  # Phase 6: Memory Decision
+  - node_id: S3_laohou_memory_debate
+    trigger: decision_C
+    phase: 6
+    text: "以后不要再提'齐天大圣'了。那四个字——天兵听到了就是死罪。"
+    context: "天兵走后的晚上"
+    player_options:
+      - id: agree_hidden
+        text: "老猴哥说得对。记在心里就行了。"
+        effect: memory_kept_secret_transmission
+        next_node: S3_laohou_agrees
+      - id: insist_spoken
+        text: "不。那个名字不能只放在心里。"
+        effect: memory_kept_spoken, iron_head_supports
+        next_node: S3_laohou_warns
+      - id: propose_code
+        text: "换一种方式记。用桃子、用山、用水帘洞的声音来记。"
+        effect: memory_kept_code_system
+        next_node: S3_laohou_considers_code
+      - id: stay_silent
+        text: "（沉默）"
+        effect: memory_kept_by_power_balance
+        next_node: END_MEMORY_DECISION
+
+  - node_id: S3_laohou_agrees
+    text: "我没让你忘。我让你不要说出来。"
+    context: "老猴强调区别"
+    next_node: END_MEMORY_DECISION
+
+  - node_id: S3_laohou_warns
+    text: "你会害死大家。"
+    context: "警告"
+    next_node: END_MEMORY_DECISION
+
+  - node_id: S3_laohou_considers_code
+    text: "..."
+    context: "老猴思考这个提议"
+    effect: code_system_accepted
+    next_node: END_MEMORY_DECISION
+
+  # Phase 6: Player Departure
+  - node_id: S3_laohou_farewell
+    trigger: player_departure
+    phase: 6
+    text: "石卵。你还年轻。下山去吧。山下能活。"
+    context: "老猴走过来，拍了拍玩家的肩"
+    next_node: END_SCENE
+
+# Insight triggers
+insight_opportunities:
+  - location: S3_laohou_meeting_argue
+    type: dialogue_pre
+    cost: 1_real_purpose
+    reveals: "老猴选择'忘记'不是因为不在乎悟空，而是因为他知道记忆的代价——记得齐天大圣的猴子不会老老实实活着。"
+  - location: S3_laohou_memory_debate
+    type: dialogue_mid
+    cost: 1_behind_dialogue
+    reveals: "幕后：老猴曾经劝过悟空不要去天宫。他的愧疚不是没劝住，而是——悟空说得对，他确实怕。"
+
+# Variable effects
+variable_effects:
+  memory_kept:
+    - action: "agree_hidden"
+      value: secret_transmission
+    - action: "insist_spoken"
+      value: spoken
+    - action: "propose_code"
+      value: code_system
+  monkey_unity:
+    - action: "support_laohou"
+      value: drift_apart
+    - action: "support_iron_head"
+      value: split

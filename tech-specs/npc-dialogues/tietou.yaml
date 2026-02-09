@@ -1,0 +1,99 @@
+# NPC Dialogue Configuration: Tietou (Scene 3 - Huaguoshan)
+# Source: /claude/plans/scenes/scene-3-huaguoshan/npcs/tietou.md
+
+npc_id: tietou_s3
+name: 铁头
+scene: scene-3-huaguoshan
+description: 年轻的猴将，悟空时代的低阶战士，燃烧的余烬
+
+initial_state:
+  fear_level: high  # Very afraid, hides it with anger
+  courage_type: false_bravado  # Real courage, false judgment
+  attitude_to_player: dismissive_but_not_hostile
+
+# Hidden intent
+hidden_intent:
+  core: "怕死，但用愤怒驱动自己，把恐惧压在愤怒下面"
+  surface_mask: "勇敢、激进、不屈"
+  insight_reveal_text: "铁头怕死。非常怕。每次天兵巡逻经过，他的手都在发抖。但他不会让任何猴子看到。"
+
+dialogue_nodes:
+  # Phase 3: Monkey Meeting
+  - node_id: S3_tietou_meeting_argue
+    trigger: phase_3_meeting
+    phase: 3
+    text: "你让我忘了大王？"
+    context: "铁头与老猴争吵，主张保留桃树、继续反抗"
+    signature_line: "大王没死。大王被压住了。他会回来的。"
+    player_options:
+      - id: support_iron_head
+        text: "大王的东西不能丢。"
+        effect: iron_head_grateful, monkey_unity_split, laohou_disappointed
+        next_node: S3_tietou_smiles
+      - id: support_laohou
+        text: "活下来最重要。"
+        effect: iron_head_disappointed_but_not_hateful, monkey_unity_drift
+        next_node: S3_tietou_fists_ground
+      - id: propose_third_way
+        text: "（提出第三条路）"
+        skill_check: persuasion_DC14
+        success_effect: iron_head_listens
+        success_next: S3_tietou_considers
+        failure_effect: dismissed
+        failure_next: S3_tietou_impatient
+      - id: admit_uncertainty
+        text: "我不知道。"
+        effect: iron_head_understands
+        next_node: S3_tietou_silent
+
+  - node_id: S3_tietou_smiles
+    text: "（铁头第一次笑了）"
+    effect: iron_head_trust_plus
+    next_node: END_MEETING
+
+  - node_id: S3_tietou_fists_ground
+    text: "（一拳砸在地上，但没有说话）"
+    effect: iron_head_fire_dimmed
+    next_node: END_MEETING
+
+  - node_id: S3_tietou_considers
+    text: "..."
+    context: "铁头愿意听第三条路"
+    next_node: END_MEETING
+
+  - node_id: S3_tietou_impatient
+    text: "想这些有什么用！"
+    effect: dismissed
+    next_node: END_MEETING
+
+  - node_id: S3_tietou_silent
+    text: "..."
+    context: "铁头没有怪你"
+    next_node: END_MEETING
+
+  # Phase 6: Memory Decision
+  - node_id: S3_tietou_memory_response
+    trigger: decision_C
+    phase: 6
+    text: "你让我忘了大王？"
+    context: "如果铁头还在且没受重伤"
+    conditional_presence: "iron_head_present AND not_critically_wounded"
+
+# Insight triggers
+insight_opportunities:
+  - location: S3_tietou_meeting_argue
+    type: dialogue_pre
+    cost: 1_real_purpose
+    reveals: "铁头怕死。非常怕。每次天兵巡逻经过，他的手都在发抖。"
+  - location: S3_tietou_meeting_argue
+    type: dialogue_mid
+    cost: 1_behind_dialogue
+    reveals: "幕后：铁头是悟空精神的'失真复制品'。他学到了悟空的不屈，但没学到悟空的智慧。"
+
+# Variable effects
+variable_effects:
+  iron_head_fate:
+    - action: "peach_tree_cut"
+      value: may_leave_soon
+    - action: "resist_confrontation"
+      value: wounded_or_worse

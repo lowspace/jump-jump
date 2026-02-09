@@ -1,0 +1,62 @@
+# NPC Dialogue Configuration: Tianbing Duizhang (Scene 3 - Huaguoshan)
+# Source: /claude/plans/scenes/scene-3-huaguoshan/npcs/tianbing-duizhang.md
+
+npc_id: tianbing_s3
+name: 天兵巡逻队长
+scene: scene-3-huaguoshan
+description: 天庭低阶武官，执行秩序的人
+
+initial_state:
+  attitude: professional_indifferent  # Just doing his job
+  mercy_level: low  # Will follow orders
+  personal_conflict: present  # Has a son born in monkey year
+
+# Hidden intent
+hidden_intent:
+  core: "完成差事，但看着幼猴会想起自己的孩子"
+  surface_mask: "公事公办、没有感情"
+  insight_reveal_text: "天兵队长的小儿子也是属猴的。他有时候看着山上那些幼猴会想起自己的孩子。"
+
+dialogue_nodes:
+  - node_id: S3_tianbing_patrol
+    trigger: patrol_encounter
+    phase: varies
+    text: ""
+    context: "天兵巡逻，根据发现采取不同行动"
+    conditional_behavior:
+      - condition: "discover_few_monkeys"
+        text: "（驱赶，上报'零散野猴，无组织行为'）"
+        effect: monkey_group_safe_temporarily
+      - condition: "discover_organized_group"
+        text: "（如实上报，等候增援）"
+        effect: threat_level_increased
+      - condition: "discover_wukong_symbol"
+        text: "（必须上报——上面要的是'彻底消除齐天大圣的痕迹'）"
+        effect: red_alert
+      - condition: "player_pleads"
+        text: "..."
+        context: "没有太大反应，对他来说这都见过了"
+        effect: minimal_response
+      - condition: "player_confronts"
+        text: "..."
+        effect: follows_orders
+
+# Insight triggers
+insight_opportunities:
+  - location: S3_tianbing_patrol
+    type: dialogue_pre
+    cost: 1_real_purpose
+    reveals: "天兵队长的小儿子也是属猴的。他有时候看着山上那些幼猴会想起自己的孩子。"
+  - location: S3_tianbing_patrol
+    type: dialogue_mid
+    cost: 1_behind_dialogue
+    reveals: "幕后：天兵队长是'平庸之恶'的化身。他不坏，但他的'不坏'救不了任何人。"
+
+# Variable effects
+variable_effects:
+  patrol_frequency:
+    - action: "scene2_ledger_choice_expose"
+      value: daily  # Was every 3 days
+  monkey_survival:
+    - action: "tianbing_mercy_trigger"
+      value: temporary_reprieve
