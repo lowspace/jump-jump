@@ -62,8 +62,12 @@ class LLMNPCAgent:
         self.client = None
         if HAS_OPENAI:
             api_key = os.getenv("OPENAI_API_KEY")
+            base_url = os.getenv("OPENAI_BASE_URL")  # 支持第三方兼容API
             if api_key:
-                self.client = OpenAI(api_key=api_key)
+                if base_url:
+                    self.client = OpenAI(api_key=api_key, base_url=base_url)
+                else:
+                    self.client = OpenAI(api_key=api_key)
             else:
                 print(f"Warning: No OPENAI_API_KEY set for {state.name}")
 
