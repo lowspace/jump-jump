@@ -167,6 +167,114 @@ class GameFlowManager:
                         max_turns=20
                     ),
                 ],
+            },
+            "scene-2-tianhe": {
+                "name": "天河·坠落之前",
+                "description": "第二章：天蓬元帅被贬之前，天庭灵蕴黑幕",
+                "goals": [
+                    SceneGoal(
+                        goal_id="s2_uncover_secret",
+                        description="发现天庭灵蕴交易的真相",
+                        required_info=["lingyun_secret", "tianpeng_love"],
+                        max_turns=18
+                    ),
+                ],
+                "decisions": [
+                    DecisionPoint(
+                        decision_id="s2_final_choice",
+                        title="知情者的抉择",
+                        description="你知道了不该知道的秘密，现在必须做出选择...",
+                        choices=[
+                            {
+                                "id": "report_truth",
+                                "text": "向上司报告发现的账目异常",
+                                "effects": {"collected_info": ["bureaucrat_choice"]}
+                            },
+                            {
+                                "id": "keep_silent",
+                                "text": "装作什么都没看见",
+                                "effects": {"collected_info": ["silent_complicity"]}
+                            },
+                            {
+                                "id": "warn_tianpeng",
+                                "text": "暗示天蓬元帅有人要害他",
+                                "effects": {"collected_info": ["defiant_act"]}
+                            }
+                        ]
+                    )
+                ],
+            },
+            "scene-3-huaguoshan": {
+                "name": "花果山·最后的桃",
+                "description": "第三章：悟空被压后，花果山猴群的生存挣扎",
+                "goals": [
+                    SceneGoal(
+                        goal_id="s3_survive_choice",
+                        description="在忠诚与生存之间找到出路",
+                        required_info=["monkey_memory", "survival_truth"],
+                        max_turns=20
+                    ),
+                ],
+                "decisions": [
+                    DecisionPoint(
+                        decision_id="s3_final_choice",
+                        title="猴群的抉择",
+                        description="天庭的围剿即将到来，你们该怎么办...",
+                        choices=[
+                            {
+                                "id": "fight_on",
+                                "text": "继续反抗，像大王那样战斗到底",
+                                "effects": {"collected_info": ["defiant_legacy"]}
+                            },
+                            {
+                                "id": "hide_survive",
+                                "text": "躲起来，活着才有希望",
+                                "effects": {"collected_info": ["pragmatic_survival"]}
+                            },
+                            {
+                                "id": "surrender_memory",
+                                "text": "向天庭投降，但偷偷保留大王的记忆",
+                                "effects": {"collected_info": ["hidden_faith"]}
+                            }
+                        ]
+                    )
+                ],
+            },
+            "scene-4-lingtai": {
+                "name": "灵台·空经",
+                "description": "第四章：取经前夕，发现无字真经的抄经僧",
+                "goals": [
+                    SceneGoal(
+                        goal_id="s4_faith_crisis",
+                        description="在无字真经面前找到属于自己的信仰",
+                        required_info=["empty_sutra_truth", "xuanzang_wisdom"],
+                        max_turns=16
+                    ),
+                ],
+                "decisions": [
+                    DecisionPoint(
+                        decision_id="s4_final_choice",
+                        title="信仰的选择",
+                        description="经文是空的，但你的路不能空。你选择...",
+                        choices=[
+                            {
+                                "id": "continue_copy",
+                                "text": "继续抄经，把空白当作另一种经文",
+                                "effects": {"collected_info": ["faith_in_void"]}
+                            },
+                            {
+                                "id": "leave_temple",
+                                "text": "离开灵山，去路上寻找自己的答案",
+                                "effects": {"collected_info": ["journey_begins"]}
+                            },
+                            {
+                                "id": "confront_truth",
+                                "text": "当众质问监院，要求真相",
+                                "effects": {"collected_info": ["reckless_truth"]}
+                            }
+                        ]
+                    )
+                ],
             }
         }
 
@@ -400,7 +508,13 @@ class GameFlowManager:
 
     def get_next_scene(self) -> str:
         """获取下一个场景"""
-        scene_order = ["scene-0-wuzhishan", "scene-1-chentangguan"]
+        scene_order = [
+            "scene-0-wuzhishan",
+            "scene-1-chentangguan",
+            "scene-2-tianhe",
+            "scene-3-huaguoshan",
+            "scene-4-lingtai"
+        ]
         try:
             current_idx = scene_order.index(self.current_scene)
             if current_idx + 1 < len(scene_order):
