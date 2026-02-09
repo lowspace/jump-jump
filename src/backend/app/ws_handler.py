@@ -2,7 +2,7 @@
 # WebSocket Handler for Jump Jump - Real-time game communication
 
 import json
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 from datetime import datetime
 
 # FastAPI WebSocket (will be imported from main.py)

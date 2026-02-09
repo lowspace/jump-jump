@@ -3,9 +3,11 @@
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
 from typing import Optional
+from pathlib import Path
 
 from ..core.config import server_config
 from .game_engine import game_engine
@@ -43,12 +45,20 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Mount static files for frontend
+frontend_path = Path(__file__).parent.parent.parent / "frontend"
+if frontend_path.exists():
+    app.mount("/static", StaticFiles(directory=str(frontend_path)), name="static")
+
 
 # ==================== REST API Routes ====================
 
 @app.get("/")
 async def root():
-    """Root endpoint - API info"""
+    """Serve the frontend game page"""
+    index_path = frontend_path / "index.html"
+    if index_path.exists():
+        return FileResponse(str(index_path))
     return {
         "name": "Jump Jump API",
         "version": "1.0.0",
@@ -58,7 +68,8 @@ async def root():
             "game_state": "/api/game/{session_id}/state",
             "game_action": "/api/game/{session_id}/action",
             "insight": "/api/game/{session_id}/insight",
-            "websocket": "/ws/{session_id}"
+            "websocket": "/ws/{session_id}",
+            "frontend": "/static/index.html"
         }
     }
 

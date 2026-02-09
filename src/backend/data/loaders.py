@@ -159,7 +159,7 @@ class DataLoader:
         defaults = {
             "scene-0-wuzhishan": "你站在五指山上。风吹过烧焦的桃树残根，带来远处山下的气息。",
             "scene-1-chentangguan": "你是陈塘关的武师。今日，总兵李靖的第三子哪吒又惹了祸。",
-            "scene-2-tianhe":": "你是天河的记账仙官陆执。今日，你发现了不该发现的账目。",
+            "scene-2-tianhe": "你是天河的记账仙官陆执。今日，你发现了不该发现的账目。",
             "scene-3-huaguoshan": "你是花果山的一只幼猴。大王已经不在了，但山还在。",
             "scene-4-lingtai": "你是灵台方寸山的抄经僧法明。今日，你发现经书是空白的。",
         }
