@@ -127,10 +127,11 @@ class LLMNPCAgent:
 
 【当前状态】
 - 情绪: {self.state.emotional_state}
-- 对玩家的信任度: {self.state.trust_toward_player:.1f}/1.0
-  * 低于0.3: 警惕、敷衍、不愿多谈
-  * 0.3-0.6: 礼貌但保留，观察中
-  * 高于0.6: 愿意分享信息，可能透露秘密
+- 对玩家的信任度/亲密度: {self.state.trust_toward_player:.1f}/1.0
+  * 低于0.3: 警惕、敷衍、不愿多谈（陌生人状态）
+  * 0.3-0.6: 礼貌但保留，观察中（熟人状态）
+  * 0.6-0.8: 愿意分享信息（家人/朋友状态）
+  * 高于0.8: 完全信任，愿意透露秘密（至亲状态）
 
 【对话历史】
 {history_section}
@@ -267,13 +268,13 @@ def create_scene_0_agents() -> LLMNPCAgentPool:
     """Create agents for Scene 0"""
     pool = LLMNPCAgentPool()
 
-    # Grandmother
-    pool.create_agent(
+    # Grandmother - 玩家是祖母的孙子，从小抚养长大
+    grandmother = pool.create_agent(
         npc_id="grandmother_s0",
         name="祖母",
-        personality="慈祥但警觉的老年村妇。经历过太多世事，知道民间传说和不为人知的秘密。对陌生人保持戒心，但对信任的人会分享 wisdom。说话有乡音，喜欢摸孩子的头。",
-        background="五指山附近的原住民，年轻时听说过很多关于山、神仙、妖怪的故事。知道哪吒剔骨还父的真相，也听说过天庭偷灵蕴的传闻，但从不轻易透露。独自抚养孙子（玩家）长大。",
-        goals=["保护孙子远离危险", "维持平静的生活", "将知道的故事传承给值得信任的人"],
+        personality="慈祥但警觉的老年村妇。玩家的亲祖母，从小抚养孙子长大。对孙子有天然的疼爱，但也担心他太过好奇而惹上麻烦。说话有乡音，喜欢摸孩子的头。",
+        background="五指山附近的原住民，年轻时听说过很多关于山、神仙、妖怪的故事。知道哪吒剔骨还父的真相，也听说过天庭偷灵蕴的传闻。独自抚养孙子（玩家）长大，视其为掌上明珠。",
+        goals=["保护孙子远离危险", "将知道的故事传承给孙子", "维持平静的生活"],
         secrets=["天庭有人在偷灵蕴，那是神仙续命的命根子", "哪吒剔骨后并没有真正复活，莲藕身有缺陷"],
         known_info={
             "story_nezha": {"content": "哪吒剔骨还父后并没有真正复活，莲藕做的身体有缺陷"},
@@ -281,9 +282,11 @@ def create_scene_0_agents() -> LLMNPCAgentPool:
             "peach_tree_legend": {"content": "五指山上的烧焦桃树是当年大圣亲手种下，根还没死"}
         }
     )
+    # 孙子与祖母的初始信任度很高
+    grandmother.state.trust_toward_player = 0.8
 
-    # Traveler
-    pool.create_agent(
+    # Traveler - 行者是路过的神秘人，与玩家初次见面
+    traveler = pool.create_agent(
         npc_id="traveler_s0",
         name="行者",
         personality="神秘、警觉、有使命感的修行者。表面上是路过，实际有明确目的。说话谨慎，经常环顾四周确认无人偷听。对天庭保持高度警惕。",
@@ -296,5 +299,7 @@ def create_scene_0_agents() -> LLMNPCAgentPool:
             "heaven_secret": {"content": "天庭害怕悟空东山再起，派了人监视"}
         }
     )
+    # 行者与玩家初次见面，信任度较低
+    traveler.state.trust_toward_player = 0.3
 
     return pool
