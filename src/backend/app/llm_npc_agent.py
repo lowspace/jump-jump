@@ -1,5 +1,5 @@
 # /src/backend/app/llm_npc_agent.py
-# True LLM-based NPC Agent - Understands and generates responses
+# TRUE LLM-based NPC Agent - Calls OpenAI API
 
 import os
 import json
@@ -7,18 +7,18 @@ from typing import Dict, Any, List, Optional
 from dataclasses import dataclass, field
 from datetime import datetime
 
-# Try to import OpenAI, but don't fail if not available
 try:
     from openai import OpenAI
     HAS_OPENAI = True
 except ImportError:
     HAS_OPENAI = False
+    print("Warning: OpenAI not installed. Run: pip install openai")
 
 
 @dataclass
 class DialogueContext:
     """Context for a single dialogue exchange"""
-    speaker: str  # 'player' or npc_id
+    speaker: str
     content: str
     timestamp: datetime
     emotional_tone: str = "neutral"
@@ -48,31 +48,24 @@ class NPCAgentState:
             timestamp=datetime.now(),
             emotional_tone=tone
         ))
-        # Keep only last 10
         if len(self.dialogue_history) > 10:
             self.dialogue_history = self.dialogue_history[-10:]
 
 
 class LLMNPCAgent:
     """
-    True LLM-based NPC Agent
-
-    Key features:
-    1. Understands player input using LLM
-    2. Generates contextual responses based on:
-       - NPC personality and background
-       - Current emotional state
-       - Trust level toward player
-       - Conversation history
-       - Information they possess
-    3. Tracks hidden intent (what they really think vs what they say)
+    TRUE LLM-based NPC Agent - Actually calls OpenAI API
     """
 
     def __init__(self, state: NPCAgentState):
         self.state = state
         self.client = None
-        if HAS_OPENAI and os.getenv("OPENAI_API_KEY"):
-            self.client = OpenAI()
+        if HAS_OPENAI:
+            api_key = os.getenv("OPENAI_API_KEY")
+            if api_key:
+                self.client = OpenAI(api_key=api_key)
+            else:
+                print(f"Warning: No OPENAI_API_KEY set for {state.name}")
 
     def _build_system_prompt(self) -> str:
         """Build the system prompt that defines this NPC's character"""
@@ -83,11 +76,15 @@ class LLMNPCAgent:
             for info_id, info in list(self.state.known_info.items())[:5]
         ])
 
-        # Build history section
-        history_section = "\n".join([
-            f"{ctx.speaker}: {ctx.content[:50]}..."
-            for ctx in self.state.dialogue_history[-5:]
-        ])
+        # Build history section (last 5 exchanges)
+        history_section = ""
+        if self.state.dialogue_history:
+            history_section = "\n".join([
+                f"{ctx.speaker}: {ctx.content[:80]}"
+                for ctx in self.state.dialogue_history[-5:]
+            ])
+        else:
+            history_section = "（对话刚开始）"
 
         prompt = f"""你是《悟空传》世界观中的NPC角色：{self.state.name}
 
@@ -98,81 +95,78 @@ class LLMNPCAgent:
 {self.state.background}
 
 【当前目标】
-{', '.join(self.state.goals)}
+{chr(10).join(['- ' + g for g in self.state.goals])}
 
-【你知道的信息】
+【你知道的信息】（根据信任度决定是否分享）
 {knowledge_section}
+
+【你的秘密】（绝不轻易透露）
+{chr(10).join(['- ' + s for s in self.state.secrets])}
 
 【当前状态】
 - 情绪: {self.state.emotional_state}
 - 对玩家的信任度: {self.state.trust_toward_player:.1f}/1.0
-  (低于0.3: 警惕, 0.3-0.7: 观察, 高于0.7: 信任)
+  * 低于0.3: 警惕、敷衍、不愿多谈
+  * 0.3-0.6: 礼貌但保留，观察中
+  * 高于0.6: 愿意分享信息，可能透露秘密
 
-【对话历史（最近5轮）】
+【对话历史】
 {history_section}
 
 【回复规则】
-1. 始终保持角色人设，用第一人称回复
-2. 根据信任度决定透露多少信息：
-   - 信任度低: 敷衍、回避、质疑玩家意图
-   - 信任度中: 礼貌但保留，分享公开信息
-   - 信任度高: 愿意分享私密信息，给出警告/建议
-3. 回复长度控制在2-4句话
+1. 始终保持角色人设，用第一人称"我"回复
+2. 根据信任度严格过滤信息：
+   - 信任度<0.3: 敷衍、回避、质疑玩家意图，最多说1-2句话
+   - 0.3-0.6: 礼貌但保留，分享公开信息，不涉秘密
+   - >0.6: 愿意分享私密信息，可能透露警告/建议，可以多说几句
+3. 如果玩家提到你知道的"秘密"关键词（剔骨、灵蕴、金蝉子等），根据信任度决定是否承认
 4. 可以反问玩家，测试玩家立场
-5. 如果玩家的问题涉及你知道的"秘密"，根据信任度决定是否透露
+5. 每次回复长度控制在1-4句话，根据信任度决定
 
-【输出格式】
-请用JSON格式输出：
+【输出格式 - 严格JSON】
 {{
-    "observable_response": "玩家看到的回复（2-4句话）",
-    "hidden_intent": "你此刻的真实想法（1句话）",
-    "emotional_change": "情绪变化，如'更加信任'/'产生怀疑'/"平静"",
-    "trust_change": 0.1,  // 建议的信任度变化，范围-0.2到+0.1
-    "wants_to_share": ["info_id1", "info_id2"],  // 想分享给玩家的信息ID
-    "gossip_targets": ["npc_id"]  // 想向谁gossip这次对话
+    "observable_response": "玩家看到的回复（中文，1-4句话）",
+    "hidden_intent": "你此刻的真实想法（1句话，中文）",
+    "emotional_change": "情绪变化，如'更加信任'/'产生怀疑'/'平静'",
+    "trust_change": 0.1,
+    "wants_to_share": ["info_id1"],
+    "should_gossip_to": ["npc_id"]
 }}"""
         return prompt
 
-    def _build_user_prompt(self, player_input: str) -> str:
-        """Build the user prompt with current context"""
-        return f"玩家对你说: \"{player_input}\"\n\n请根据角色设定和当前状态生成回复。"
-
     def generate_response(self, player_input: str) -> Dict[str, Any]:
-        """
-        Generate true agent response using LLM
+        """Generate true agent response using LLM API call"""
 
-        Returns:
-            {
-                "observable": str,  # What player sees
-                "hidden_intent": str,  # What NPC really thinks
-                "emotional_change": str,
-                "trust_change": float,
-                "wants_to_share": List[str],
-                "gossip_targets": List[str]
-            }
-        """
         # Add player input to history
         self.state.add_to_history("player", player_input)
 
-        # If no LLM available, fall back to smart template
+        # If no API key, return error
         if not self.client:
-            return self._generate_smart_fallback(player_input)
+            return {
+                "observable": "（系统错误：没有配置OpenAI API Key，请设置环境变量 OPENAI_API_KEY）",
+                "hidden_intent": "无法调用LLM API",
+                "emotional_change": "neutral",
+                "trust_change": 0,
+                "wants_to_share": [],
+                "should_gossip_to": []
+            }
 
         try:
-            # Call LLM
+            # CALL OPENAI API
             response = self.client.chat.completions.create(
                 model="gpt-3.5-turbo",
                 messages=[
                     {"role": "system", "content": self._build_system_prompt()},
-                    {"role": "user", "content": self._build_user_prompt(player_input)}
+                    {"role": "user", "content": f"玩家对你说: \"{player_input}\"\n\n请根据角色设定生成回复，严格按JSON格式输出。"}
                 ],
-                temperature=0.7,
+                temperature=0.8,
                 max_tokens=500
             )
 
             # Parse JSON response
             content = response.choices[0].message.content
-            # Extract JSON if wrapped in markdown
+
+            # Extract JSON
             if "```json" in content:
                 content = content.split("```json")[1].split("```")[0]
             elif "```" in content:
@@ -180,269 +174,41 @@ class LLMNPCAgent:
 
             result = json.loads(content.strip())
 
-            # Update state based on response
-            self._update_state_from_response(result)
+            # Update state
+            trust_change = result.get("trust_change", 0)
+            self.state.trust_toward_player = max(0.0, min(1.0,
+                self.state.trust_toward_player + trust_change))
+
+            emotional = result.get("emotional_change", "neutral")
+            if emotional != "neutral":
+                self.state.emotional_state = emotional
 
             # Add NPC response to history
             self.state.add_to_history(
                 self.state.npc_id,
                 result.get("observable_response", "..."),
-                result.get("emotional_change", "neutral")
+                emotional
             )
 
             return {
                 "observable": result.get("observable_response", "..."),
                 "hidden_intent": result.get("hidden_intent", "..."),
-                "emotional_change": result.get("emotional_change", "neutral"),
-                "trust_change": result.get("trust_change", 0),
+                "emotional_change": emotional,
+                "trust_change": trust_change,
                 "wants_to_share": result.get("wants_to_share", []),
-                "gossip_targets": result.get("gossip_targets", [])
+                "should_gossip_to": result.get("should_gossip_to", [])
             }
 
         except Exception as e:
-            print(f"LLM error: {e}, falling back to template")
-            return self._generate_smart_fallback(player_input)
-
-    def _generate_smart_fallback(self, player_input: str) -> Dict[str, Any]:
-        """
-        Smart template fallback when LLM unavailable
-
-        Analyzes player input keywords and generates contextual response
-        """
-        # Simple keyword analysis
-        keywords = {
-            "故事": ["story", "legend", "tale"],
-            "悟空": ["wukong", "monkey", "大圣"],
-            "山": ["mountain", "hill", "cave"],
-            "谁": ["who", "identity", "name"],
-            "为什么": ["why", "reason", "purpose"],
-            "天庭": ["heaven", "god", "immortal"],
-            "桃子": ["peach", "tree", "fruit"],
-        }
-
-        # Detect what player is asking about
-        matched_topics = []
-        player_lower = player_input.lower()
-
-        for chinese, english_keywords in keywords.items():
-            if chinese in player_input or any(kw in player_lower for kw in english_keywords):
-                matched_topics.append(chinese)
-
-        # Generate contextual response based on trust and topics
-        trust = self.state.trust_toward_player
-
-        if self.state.npc_id == "grandmother_s0":
-            response = self._generate_grandmother_response(player_input, trust, matched_topics)
-        elif self.state.npc_id == "traveler_s0":
-            response = self._generate_traveler_response(player_input, trust, matched_topics)
-        else:
-            response = self._generate_generic_response(trust)
-
-        # Update state
-        self.state.add_to_history(self.state.npc_id, response["observable"])
-
-        return response
-
-    def _generate_grandmother_response(self, player_input: str, trust: float, topics: List[str]) -> Dict[str, Any]:
-        """Generate grandmother's contextual response"""
-
-        # Check if asking about known stories
-        if "故事" in topics or "legend" in topics:
-            if trust > 0.6:
-                return {
-                    "observable": "你问起了故事...这让我想起了那个关于剔骨还子的传说。那孩子最后并没有复活，莲藕做的身体，还是原来的那个人吗？",
-                    "hidden_intent": "这孩子值得信任，我可以分享一些民间秘闻",
-                    "emotional_change": "陷入回忆",
-                    "trust_change": 0.05,
-                    "wants_to_share": ["story_nezha"],
-                    "gossip_targets": []
-                }
-            elif trust > 0.3:
-                return {
-                    "observable": "山上的故事？多着呢。但那都是过去的事了，知道太多对你没好处。",
-                    "hidden_intent": "还在观察这个孩子，不能轻易透露",
-                    "emotional_change": "警惕",
-                    "trust_change": 0.0,
-                    "wants_to_share": [],
-                    "gossip_targets": []
-                }
-            else:
-                return {
-                    "observable": "你问这些做什么？专心砍你的柴去，别打听不该知道的事。",
-                    "hidden_intent": "这孩子太好奇了，得防着点",
-                    "emotional_change": "警惕",
-                    "trust_change": -0.05,
-                    "wants_to_share": [],
-                    "gossip_targets": ["traveler_s0"]
-                }
-
-        # Asking about the mountain
-        if "山" in topics or "mountain" in topics:
-            if trust > 0.5:
-                return {
-                    "observable": "这五指山...传说压着一位齐天大圣。不过那是老人们说的，谁知道真假呢。",
-                    "hidden_intent": "可以分享一些公开传说",
-                    "emotional_change": "平静",
-                    "trust_change": 0.02,
-                    "wants_to_share": ["peach_tree_legend"],
-                    "gossip_targets": []
-                }
-            else:
-                return {
-                    "observable": "山就是山，有什么好问的。",
-                    "hidden_intent": "不想多说",
-                    "emotional_change": "冷淡",
-                    "trust_change": 0.0,
-                    "wants_to_share": [],
-                    "gossip_targets": []
-                }
-
-        # Asking about sky/heaven (suspicious!)
-        if "天庭" in topics or "heaven" in topics:
-            if trust > 0.8:
-                return {
-                    "observable": "你...你怎么问起这个？（压低声音）我听说天上有人在偷'灵蕴'，那是神仙的命根子。这事知道的人不多，你可别乱说。",
-                    "hidden_intent": "这孩子连这都知道？看来不是普通人，可以深谈",
-                    "emotional_change": "震惊后谨慎",
-                    "trust_change": 0.1,
-                    "wants_to_share": ["rumor_tianthe"],
-                    "gossip_targets": []
-                }
-            else:
-                return {
-                    "observable": "天庭？那是我们凡人该议论的吗？快走快走，别给我惹麻烦。",
-                    "hidden_intent": "这孩子太危险了，得让行者知道",
-                    "emotional_change": "恐惧",
-                    "trust_change": -0.1,
-                    "wants_to_share": [],
-                    "gossip_targets": ["traveler_s0"]
-                }
-
-        # Generic response
-        if trust > 0.6:
+            print(f"LLM API error: {e}")
             return {
-                "observable": f"你问'{player_input[:20]}'...（慈祥地笑）你这孩子，问题真多。来，到奶奶这边坐。",
-                "hidden_intent": "喜欢这个孩子，愿意多聊聊",
-                "emotional_change": "慈祥",
-                "trust_change": 0.03,
+                "observable": f"（{self.state.name}似乎在思考什么...）",
+                "hidden_intent": f"API调用失败: {str(e)[:50]}",
+                "emotional_change": "neutral",
+                "trust_change": 0,
                 "wants_to_share": [],
-                "gossip_targets": []
+                "should_gossip_to": []
             }
-        elif trust > 0.3:
-            return {
-                "observable": "嗯...（看了你一眼）你问这个做什么？",
-                "hidden_intent": "还在观察",
-                "emotional_change": "观察",
-                "trust_change": 0.0,
-                "wants_to_share": [],
-                "gossip_targets": []
-            }
-        else:
-            return {
-                "observable": "（皱眉）我很忙，没空闲聊。",
-                "hidden_intent": "不想理这个孩子",
-                "emotional_change": "冷淡",
-                "trust_change": -0.02,
-                "wants_to_share": [],
-                "gossip_targets": []
-            }
-
-    def _generate_traveler_response(self, player_input: str, trust: float, topics: List[str]) -> Dict[str, Any]:
-        """Generate traveler's contextual response"""
-
-        # Asking about identity
-        if "谁" in topics or "identity" in topics or "name" in topics:
-            if trust > 0.7:
-                return {
-                    "observable": "（环顾四周，确认无人后）实不相瞒，我在找一个人。他曾经是齐天大圣，现在被压在这座山下。我是他的师父——金蝉子。",
-                    "hidden_intent": "这孩子值得信任，可以透露真实身份",
-                    "emotional_change": "谨慎但坦诚",
-                    "trust_change": 0.05,
-                    "wants_to_share": ["traveler_identity", "wukong_location"],
-                    "gossip_targets": []
-                }
-            elif trust > 0.4:
-                return {
-                    "observable": "我？只是一个路过的旅人，在这座山寻找...一些答案。",
-                    "hidden_intent": "还不能完全信任",
-                    "emotional_change": "保留",
-                    "trust_change": 0.0,
-                    "wants_to_share": [],
-                    "gossip_targets": []
-                }
-            else:
-                return {
-                    "observable": "（警惕地）我是谁与你何干？倒是你，为何打探我的事？",
-                    "hidden_intent": "这孩子可疑，需要防备",
-                    "emotional_change": "警惕",
-                    "trust_change": -0.05,
-                    "wants_to_share": [],
-                    "gossip_targets": []
-                }
-
-        # Asking about monkey/king
-        if "悟空" in topics or "monkey" in topics or "wukong" in topics:
-            if trust > 0.6:
-                return {
-                    "observable": "你...你知道他在山下？（压低声音）天庭派了人监视这座山，怕的是他东山再起。我得小心行事。",
-                    "hidden_intent": "这孩子知道内情，可以合作",
-                    "emotional_change": "谨慎兴奋",
-                    "trust_change": 0.08,
-                    "wants_to_share": ["heaven_secret"],
-                    "gossip_targets": []
-                }
-            else:
-                return {
-                    "observable": "齐天大圣？那只是传说罢了。",
-                    "hidden_intent": "不能暴露知道太多",
-                    "emotional_change": "伪装",
-                    "trust_change": 0.0,
-                    "wants_to_share": [],
-                    "gossip_targets": []
-                }
-
-        # Generic
-        if trust > 0.6:
-            return {
-                "observable": f"（若有所思）'{player_input[:20]}'...你这孩子，知道的比看上去多。",
-                "hidden_intent": "这个孩子不简单，值得培养",
-                "emotional_change": "感兴趣",
-                "trust_change": 0.03,
-                "wants_to_share": [],
-                "gossip_targets": []
-            }
-        else:
-            return {
-                "observable": "（看了你一眼，没有回答）",
-                "hidden_intent": "还在观察这个孩子",
-                "emotional_change": "观察",
-                "trust_change": 0.0,
-                "wants_to_share": [],
-                "gossip_targets": []
-            }
-
-    def _generate_generic_response(self, trust: float) -> Dict[str, Any]:
-        """Generic fallback response"""
-        return {
-            "observable": "...（沉默）" if trust < 0.3 else "嗯...（点点头）",
-            "hidden_intent": "观察中",
-            "emotional_change": "neutral",
-            "trust_change": 0.0,
-            "wants_to_share": [],
-            "gossip_targets": []
-        }
-
-    def _update_state_from_response(self, result: Dict[str, Any]):
-        """Update NPC state based on generated response"""
-        # Update trust
-        trust_change = result.get("trust_change", 0)
-        self.state.trust_toward_player = max(0, min(1,
-            self.state.trust_toward_player + trust_change))
-
-        # Update emotional state
-        emotional_change = result.get("emotional_change", "")
-        if emotional_change and emotional_change != "neutral":
-            self.state.emotional_state = emotional_change
 
 
 class LLMNPCAgentPool:
@@ -472,16 +238,8 @@ class LLMNPCAgentPool:
         """Get agent by ID"""
         return self.agents.get(npc_id)
 
-    def process_dialogue(self, npc_id: str, player_input: str) -> Dict[str, Any]:
-        """Process dialogue with specific NPC"""
-        agent = self.agents.get(npc_id)
-        if not agent:
-            return {"error": f"NPC {npc_id} not found"}
 
-        return agent.generate_response(player_input)
-
-
-# Factory functions for Scene 0 NPCs
+# Factory function for Scene 0
 def create_scene_0_agents() -> LLMNPCAgentPool:
     """Create agents for Scene 0"""
     pool = LLMNPCAgentPool()
@@ -490,14 +248,14 @@ def create_scene_0_agents() -> LLMNPCAgentPool:
     pool.create_agent(
         npc_id="grandmother_s0",
         name="祖母",
-        personality="慈祥但警觉的老年村妇。经历过太多世事，知道民间传说和不为人知的秘密。对陌生人保持戒心，但对信任的人会分享 wisdom。",
-        background="五指山附近的原住民，年轻时听说过很多关于山、神仙、妖怪的故事。知道一些天庭的秘密传闻，但从不轻易透露。独自抚养孙子（玩家）长大。",
-        goals=["保护孙子远离危险", "维持平静的生活", "将知道的故事传承下去"],
-        secrets=["知道天庭有人在偷灵蕴", "听说过哪吒剔骨还父的真相"],
+        personality="慈祥但警觉的老年村妇。经历过太多世事，知道民间传说和不为人知的秘密。对陌生人保持戒心，但对信任的人会分享 wisdom。说话有乡音，喜欢摸孩子的头。",
+        background="五指山附近的原住民，年轻时听说过很多关于山、神仙、妖怪的故事。知道哪吒剔骨还父的真相，也听说过天庭偷灵蕴的传闻，但从不轻易透露。独自抚养孙子（玩家）长大。",
+        goals=["保护孙子远离危险", "维持平静的生活", "将知道的故事传承给值得信任的人"],
+        secrets=["天庭有人在偷灵蕴，那是神仙续命的命根子", "哪吒剔骨后并没有真正复活，莲藕身有缺陷"],
         known_info={
-            "story_nezha": {"content": "哪吒剔骨还父后并没有真正复活，莲藕身有缺陷"},
-            "rumor_tianthe": {"content": "天上有人在偷灵蕴，那是神仙的命根子"},
-            "peach_tree_legend": {"content": "五指山上的桃树与齐天大圣有关"}
+            "story_nezha": {"content": "哪吒剔骨还父后并没有真正复活，莲藕做的身体有缺陷"},
+            "rumor_tianthe": {"content": "天上有人在偷'灵蕴'，那是神仙的命根子"},
+            "peach_tree_legend": {"content": "五指山上的烧焦桃树是当年大圣亲手种下，根还没死"}
         }
     )
 
@@ -505,12 +263,12 @@ def create_scene_0_agents() -> LLMNPCAgentPool:
     pool.create_agent(
         npc_id="traveler_s0",
         name="行者",
-        personality="神秘、警觉、有使命感的修行者。表面上是路过，实际有明确目的。对天庭保持高度警惕，在寻找值得信任的帮手。",
-        background="金蝉子转世，正在寻找被压在五指山下的齐天大圣——他的大徒弟。知道天庭的阴谋，必须小心行事避免被发现。",
+        personality="神秘、警觉、有使命感的修行者。表面上是路过，实际有明确目的。说话谨慎，经常环顾四周确认无人偷听。对天庭保持高度警惕。",
+        background="金蝉子转世，正在寻找被压在五指山下的齐天大圣——他的大徒弟。知道天庭害怕悟空东山再起，派了人监视这座山，必须小心行事。",
         goals=["找到悟空", "避开天庭耳目", "寻找可信任的帮手"],
-        secrets=["真实身份是金蝉子", "天庭派了人监视五指山"],
+        secrets=["真实身份是金蝉子转世", "天庭派了人监视五指山"],
         known_info={
-            "traveler_identity": {"content": "我是金蝉子转世"},
+            "traveler_identity": {"content": "我是金蝉子转世，在找我的大徒弟"},
             "wukong_location": {"content": "齐天大圣被压在五指山下"},
             "heaven_secret": {"content": "天庭害怕悟空东山再起，派了人监视"}
         }
