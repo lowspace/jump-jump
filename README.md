@@ -134,6 +134,14 @@ Player Action
 
 > 你能做到的最好结果，可能只是让被压在五指山下的孙悟空多了一棵桃树。但这棵桃树是真实的，它证明了你存在过。
 
+### 影响力报告
+
+游戏结束时生成影响力报告，展示玩家的每个选择在西游世界中激起的微小涟漪：
+
+- **行为画像**：基于理想主义/变革参与度/记忆守护三个维度，映射为 8 种标签（革命者、守夜人、幸存者、见证者、理想主义者、实用主义者、叛逆者、沉默者）
+- **涟漪叙事**：每个场景决策对应一段手写叙事，风格微小、具体、不夸张。如"哪吒多停顿了三秒"、"老猴把故事刻在了石壁最深处"
+- **结尾**：基于画像的个性化总结，核心信息——"你没有改变西游的结局，但因为你来过，这个世界上多了一些微小的、不同的东西。"
+
 ---
 
 ## 代码结构
@@ -141,26 +149,27 @@ Player Action
 ```
 src/
 ├── cli/
-│   └── client_v5.py           # CLI 游戏客户端（完整版）
+│   └── client_v5.py           # CLI 游戏客户端（完整版 + 影响力报告）
 ├── backend/
 │   ├── app/
-│   │   ├── llm_npc_agent.py   # LLM NPC Agent 实现
-│   │   ├── game_flow.py       # 游戏流程管理器
-│   │   └── ...
+│   │   ├── llm_npc_agent.py   # LLM NPC Agent 实现（OpenAI API）
+│   │   ├── game_flow.py       # 游戏流程管理器 + 影响力报告生成
+│   │   ├── state_manager.py   # 会话持久化（SQLite）
+│   │   └── npc_agents.py      # NPC Agent Pool + 三层激活管理
+│   ├── core/
+│   │   ├── config.py          # 全局配置
+│   │   └── state_schema.py    # 状态类型定义
 │   └── data/
 │       └── npcs/              # NPC YAML 配置文件
 ├── demo_v5_full_game.py       # 自动化演示脚本
-└── tests/                     # 测试文件
+└── tests/                     # 测试文件（44 tests）
 
 .claude/plans/
 ├── 01-crispy-bouncing-tide.md # 游戏设计文档 v1
 ├── world-bible.md             # 世界设定书（根规则）
-├── scene-0-wuzhishan.md       # 场景详细设计
-├── scene-1-chentangguan.md
-├── scene-2-tianhe.md
-├── scene-3-huaguoshan.md
-├── scene-4-lingtai.md
-└── agent-arch-round*.md       # Agent 架构设计文档
+├── world-bible-*.md           # 世界设定分册（9个）
+├── scene-*.md                 # 场景详细设计（5个）
+└── agent-arch-round*.md       # Agent 架构设计文档（3轮）
 
 wu_kong_zhuan/                 # 《悟空传》原著分析技能库
 ```
@@ -174,15 +183,16 @@ wu_kong_zhuan/                 # 《悟空传》原著分析技能库
 - JSON 输出：observable_response + hidden_intent + trust_change
 
 **GameFlowManager** (`game_flow.py`)
-- 场景管理（5 个完整场景）
-- 目标追踪系统
-- 决策点触发
-- 场景切换
+- 场景管理（5 个完整场景，每场景含目标/决策/事件）
+- 状态追踪：scenes_visited、decisions_detail、per-type 洞察力计数
+- 决策点触发（目标完成或回合耗尽时）
+- 影响力报告生成：行为画像（3 维度 → 8 种标签）+ 15 段涟漪叙事
 
 **JumpJumpGame** (`client_v5.py`)
-- CLI 主循环
+- CLI 主循环（Rich 渲染）
 - 场景 NPC 动态加载
 - 回合制交互
+- 游戏结束时渲染影响力报告（统计、涟漪面板、画像进度条、结尾叙事）
 
 ---
 
@@ -199,19 +209,28 @@ pip install openai rich
 ```bash
 # 使用环境变量
 export OPENAI_API_KEY="sk-xxx"
-python3 -m cli.client_v5
+python src/cli/client_v5.py
 
-# 或命令行参数
-python3 -m cli.client_v5 \
+# 或命令行参数（支持自定义 API 端点和模型）
+python src/cli/client_v5.py \
   --api-key "sk-xxx" \
   --base-url "https://api.openai.com/v1" \
   --model "gpt-3.5-turbo"
+
+# 不配置 API Key 也可运行（NPC 返回占位回复，流程完整可走通）
+python src/cli/client_v5.py
 ```
 
 ### 自动化演示（无需 API Key）
 
 ```bash
-python3 demo_v5_full_game.py
+python src/demo_v5_full_game.py
+```
+
+### 运行测试
+
+```bash
+pytest src/tests/ -v
 ```
 
 ---
@@ -251,8 +270,10 @@ python3 demo_v5_full_game.py
 从最初的技术验证到完整的 5 场景实现，经历了多轮架构迭代：
 
 1. **Round 1**：Agent 身份与边界定义
-2. **Round 2**：NPC as Tool + GM 4 模块拆分
+2. **Round 2**：NPC as Tool + GM 4 模块拆分 + Dispatcher + PI 防御
 3. **Round 3**：NPC 社会 + 弹性 NPC + 双层输出 + 自然交互范式
+4. **审计修复**：硬编码路径、洞察力 2+2 系统、turn_count 重置、Scene 1 决策补全
+5. **影响力报告**：行为画像 + 涟漪叙事 + 结尾总结
 
 核心洞察：**"缝隙参与"**——玩家的价值恰恰来自被忽视。
 
