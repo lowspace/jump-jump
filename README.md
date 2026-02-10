@@ -6,6 +6,8 @@
 
 这不是一个关于英雄的游戏，这是一个关于**被忽视者**的游戏。
 
+项目复盘：https://github.com/lowspace/jump-jump/discussions/1
+
 ---
 
 ## 核心理念
