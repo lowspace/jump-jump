@@ -84,7 +84,11 @@ class GameFlowManager:
             "collected_info": [],
             "trust_levels": {},
             "insights_used": 0,
+            "insights_true_purpose_used": 0,
+            "insights_behind_dialogue_used": 0,
             "decisions_made": [],
+            "decisions_detail": [],
+            "scenes_visited": [],
             "events_triggered": [],
             "secrets_unlocked": [],
         }
@@ -165,6 +169,39 @@ class GameFlowManager:
                         description="理解哪吒剔骨的真正原因",
                         required_info=["nezha_truth", "lijing_pressure"],
                         max_turns=20
+                    ),
+                ],
+                "decisions": [
+                    DecisionPoint(
+                        decision_id="s1_final_choice",
+                        title="少年的选择",
+                        description="哪吒即将做出不可挽回的决定，而你恰好在场...",
+                        choices=[
+                            {
+                                "id": "try_persuade",
+                                "text": "试图劝阻哪吒，告诉他还有别的路",
+                                "effects": {"collected_info": ["persuade_attempt"]}
+                            },
+                            {
+                                "id": "silent_witness",
+                                "text": "默默见证这一切，不做干预",
+                                "effects": {"collected_info": ["silent_witness"]}
+                            },
+                            {
+                                "id": "relay_mother",
+                                "text": "转告殷夫人的话——她准备了逃走的盘缠",
+                                "effects": {"collected_info": ["mother_message"]}
+                            }
+                        ]
+                    )
+                ],
+                "events": [
+                    GameEvent(
+                        event_id="s1_nezha_trust",
+                        trigger_type="trust",
+                        trigger_condition={"nezha_s1": 0.6},
+                        content="哪吒看了你一眼，嘴角微动，似乎想说什么...",
+                        effects={"collected_info": ["nezha_hesitation"]}
                     ),
                 ],
             },
@@ -283,6 +320,14 @@ class GameFlowManager:
         self.current_scene = scene_id
         self.current_phase = GamePhase.EXPLORATION
         self.turn_count = 0
+
+        # 记录访问过的场景
+        if scene_id not in self.state["scenes_visited"]:
+            self.state["scenes_visited"].append(scene_id)
+
+        # 重置每场景洞察力计数
+        self.state["insights_true_purpose_used"] = 0
+        self.state["insights_behind_dialogue_used"] = 0
 
         scene_data = self.scenes.get(scene_id, {})
         self.current_goals = scene_data.get("goals", [])
@@ -453,6 +498,14 @@ class GameFlowManager:
             if decision.decision_id == decision_id:
                 for choice in decision.choices:
                     if choice["id"] == choice_id:
+                        # 记录决策详情
+                        self.state["decisions_detail"].append({
+                            "scene": self.current_scene,
+                            "decision_id": decision_id,
+                            "choice_id": choice_id,
+                            "choice_text": choice["text"],
+                        })
+
                         # 应用选择效果
                         self._apply_effects(choice.get("effects", {}))
 
@@ -537,9 +590,162 @@ class GameFlowManager:
     def get_game_summary(self) -> Dict[str, Any]:
         """获取游戏总结"""
         return {
-            "scenes_visited": [self.current_scene],  # 简化版
+            "scenes_visited": self.state["scenes_visited"],
             "decisions_made": self.state["decisions_made"],
+            "decisions_detail": self.state["decisions_detail"],
             "collected_info": self.state["collected_info"],
             "secrets_unlocked": self.state["secrets_unlocked"],
             "final_trust_levels": self.state["trust_levels"],
+            "insights_true_purpose_used": self.state["insights_true_purpose_used"],
+            "insights_behind_dialogue_used": self.state["insights_behind_dialogue_used"],
+        }
+
+    def generate_impact_report(self) -> Dict[str, Any]:
+        """
+        生成影响力报告
+
+        基于玩家行为画像，展示"你改变了什么微小的事"。
+        涟漪而非巨浪（P6）。
+        """
+        decisions = self.state["decisions_detail"]
+
+        # ── 1) 行为画像计算 ──
+        # 三个维度：理想主义、变革参与度、记忆守护
+        idealism = 0.0
+        change_participation = 0.0
+        memory_guardian = 0.0
+
+        choice_scores = {
+            # Scene 0
+            "tell_grandma":     {"idealism": 0.3, "change": 0.1, "memory": 0.6},
+            "keep_secret":      {"idealism": 0.5, "change": 0.2, "memory": 0.4},
+            "follow_traveler":  {"idealism": 0.7, "change": 0.6, "memory": 0.2},
+            # Scene 1
+            "try_persuade":     {"idealism": 0.8, "change": 0.7, "memory": 0.3},
+            "silent_witness":   {"idealism": 0.3, "change": 0.1, "memory": 0.7},
+            "relay_mother":     {"idealism": 0.5, "change": 0.5, "memory": 0.5},
+            # Scene 2
+            "report_truth":     {"idealism": 0.7, "change": 0.8, "memory": 0.2},
+            "keep_silent":      {"idealism": 0.2, "change": 0.1, "memory": 0.3},
+            "warn_tianpeng":    {"idealism": 0.6, "change": 0.6, "memory": 0.5},
+            # Scene 3
+            "fight_on":         {"idealism": 0.9, "change": 0.9, "memory": 0.8},
+            "hide_survive":     {"idealism": 0.2, "change": 0.2, "memory": 0.5},
+            "surrender_memory": {"idealism": 0.4, "change": 0.3, "memory": 0.9},
+            # Scene 4
+            "continue_copy":    {"idealism": 0.4, "change": 0.2, "memory": 0.8},
+            "leave_temple":     {"idealism": 0.7, "change": 0.7, "memory": 0.4},
+            "confront_truth":   {"idealism": 0.9, "change": 0.9, "memory": 0.3},
+        }
+
+        decision_count = max(len(decisions), 1)
+        for d in decisions:
+            scores = choice_scores.get(d["choice_id"], {})
+            idealism += scores.get("idealism", 0.5)
+            change_participation += scores.get("change", 0.5)
+            memory_guardian += scores.get("memory", 0.5)
+
+        idealism /= decision_count
+        change_participation /= decision_count
+        memory_guardian /= decision_count
+
+        # 组合得出 profile label
+        profile = self._calculate_profile(idealism, change_participation, memory_guardian)
+
+        # ── 2) 涟漪叙事 ──
+        ripple_narratives = {
+            # Scene 0
+            "tell_grandma": "那天晚上祖母没有睡着。她翻出了压在箱底三十年的旧布包，里面是一片烧焦的桃叶。第二天早上，她把它别在了你的衣襟上。",
+            "keep_secret": "你没有说出口的话，变成了夜里反复出现的梦。梦里五指山在震动，有什么东西快要醒了。后来你发现，梦里的震动是真的。",
+            "follow_traveler": "行者走后，你在他歇脚的石头上发现了一个小小的刻痕——一只猴子的轮廓。你用手指描了一遍，石头是温热的。",
+            # Scene 1
+            "try_persuade": "哪吒多停顿了三秒。那三秒里他回头看了一眼母亲的方向。他最终还是拿起了刀，但那三秒，是他留给这个世界最后的犹豫。",
+            "silent_witness": "你什么都没做。但你在场。多年后哪吒的莲藕身偶尔会感到一阵温热——那是被人注视过的温度，虽然他不知道是谁。",
+            "relay_mother": "哪吒听完后沉默了很久。他没有逃走，但他把殷夫人准备的盘缠偷偷放回了母亲的枕头下。第二天剔骨时，他的眼睛是干的。",
+            # Scene 2
+            "report_truth": "你的报告石沉大海，没有人理会一个小吏的发现。但十五年后，有人在旧档案里找到了它，那时灵蕴危机已经不可收拾。你的名字被记在了一份没人看的备忘录上。",
+            "keep_silent": "天蓬被贬的那天，你正常上班、正常下班。走过天河桥时，你低头看了一眼水面。水面平静如镜，什么都没有发生。",
+            "warn_tianpeng": "天蓬收到暗示后笑了。他说他早就知道。但那天晚上他在阿月的窗下多站了一刻钟。守卫的记录上写着：'异常滞留，已上报。'",
+            # Scene 3
+            "fight_on": "最后一场战斗很短。天兵甚至没有认真打。但铁头冲锋时喊的那声'大王万岁'，在山谷里回响了三遍。巡逻队长在报告里写了六个字：'已清剿，无异常。'",
+            "hide_survive": "猴群藏进了水帘洞最深处。五年后，一只小猴在洞壁上发现了一行字，是大王用指甲刻的：'俺老孙到此一游'。它不认识字，但用手指描了很多遍。",
+            "surrender_memory": "猴群投降时，天兵收走了所有刻着大王故事的石板。但老猴提前把最重要的那块藏在了水帘洞入口的瀑布后面。一百年后，石板上的字已经被水冲得模糊，但还能辨认。",
+            # Scene 4
+            "continue_copy": "你继续抄经。空白的经卷在你笔下变成了一行行工整的字。慧空师兄路过时停下看了一眼，嘴角动了动，什么都没说，继续走了。",
+            "leave_temple": "你离开灵山的那天是个阴天。走到山门时你回头看了一眼，慧空师兄站在抄经房的窗口。他朝你轻轻点了点头。后来你在路上遇到了一个穿普通僧袍的人。",
+            "confront_truth": "监院把你逐出了寺院。理由是'信力不足'。慧空师兄在你走之前塞给你一张纸条，上面写着一个地名。你后来去了那里，发现了另一座藏经阁。",
+        }
+
+        scene_ripples = []
+        scene_names = {
+            "scene-0-wuzhishan": "五指山·尘埃",
+            "scene-1-chentangguan": "陈塘关",
+            "scene-2-tianhe": "天河·坠落之前",
+            "scene-3-huaguoshan": "花果山·最后的桃",
+            "scene-4-lingtai": "灵台·空经",
+        }
+        for d in decisions:
+            scene_ripples.append({
+                "scene": d["scene"],
+                "scene_name": scene_names.get(d["scene"], d["scene"]),
+                "choice_text": d["choice_text"],
+                "ripple": ripple_narratives.get(d["choice_id"], "你的选择在世界的某个角落激起了微小的涟漪。"),
+            })
+
+        # ── 3) 结尾总结 ──
+        profile_endings = {
+            "革命者": "你试图改变一切。结果什么都没变。但因为你来过，有些人在做选择时多犹豫了一秒。那一秒，是你存在过的证据。",
+            "守夜人": "你选择守护记忆而非创造新的。在这个遗忘比记住更容易的世界里，你是一根不肯熄灭的蜡烛。风吹不灭你，因为你知道黑暗的重量。",
+            "幸存者": "你选择活下来。这听起来不够壮烈，但在这个世界里，活着本身就是一种反抗。你用呼吸证明：他们没有赢。",
+            "见证者": "你什么都没做，但你什么都看到了。这个世界上多了一个记得真相的人。也许有一天，真相需要一个讲述者。",
+            "理想主义者": "你相信事情可以不同。在一个命运已经被写定的世界里，你的相信本身就是最大的叛逆。",
+            "实用主义者": "你做了能做的事，接受了不能改变的事。这不是妥协，是智慧。你知道什么时候该弯腰，什么时候该站直。",
+            "叛逆者": "你拒绝所有既定的答案。你不一定找到了更好的，但你证明了：还有别的可能。",
+            "沉默者": "你的沉默比大多数人的呐喊更重。因为你知道，在这个世界上，有些事说出来就碎了。你选择把它们完整地留在心里。",
+        }
+
+        ending = profile_endings.get(profile["label"], profile_endings["见证者"])
+        closing = "你没有改变西游的结局。但因为你来过，这个世界上多了一些微小的、不同的东西。"
+
+        return {
+            "scenes_visited": self.state["scenes_visited"],
+            "decisions_detail": decisions,
+            "collected_info_count": len(self.state["collected_info"]),
+            "insights_total_used": (
+                self.state["insights_true_purpose_used"]
+                + self.state["insights_behind_dialogue_used"]
+            ),
+            "profile": profile,
+            "scene_ripples": scene_ripples,
+            "ending_narrative": ending,
+            "closing": closing,
+        }
+
+    def _calculate_profile(
+        self, idealism: float, change: float, memory: float
+    ) -> Dict[str, Any]:
+        """根据三维度得分计算行为画像标签"""
+        # 8种画像
+        if idealism > 0.7 and change > 0.7:
+            label = "革命者"
+        elif memory > 0.7 and change < 0.4:
+            label = "守夜人"
+        elif idealism < 0.3 and change < 0.3:
+            label = "幸存者"
+        elif idealism < 0.4 and memory > 0.5:
+            label = "见证者"
+        elif idealism > 0.6 and change < 0.5:
+            label = "理想主义者"
+        elif idealism < 0.5 and change > 0.5:
+            label = "实用主义者"
+        elif change > 0.6 and memory < 0.4:
+            label = "叛逆者"
+        else:
+            label = "沉默者"
+
+        return {
+            "label": label,
+            "idealism_index": round(idealism, 2),
+            "change_participation": round(change, 2),
+            "memory_guardian_index": round(memory, 2),
         }

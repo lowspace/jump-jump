@@ -389,7 +389,7 @@ def initialize_npcs_for_scene(scene_id: str) -> NPCAgentPool:
     for config in npc_configs:
         npc = NPCAgent.from_config(config)
         # Determine initial layer based on NPC importance
-        if config.npc_id in ["nezha_s1", "lijing_s1", "tianpeng_s2", "laohou_s3", "huikong_s4"]:
+        if config.npc_id in ["grandmother_s0", "traveler_s0", "nezha_s1", "lijing_s1", "tianpeng_s2", "laohou_s3", "huikong_s4"]:
             pool.add_npc(npc, NPCLayer.ACTIVE)
         else:
             pool.add_npc(npc, NPCLayer.BACKGROUND)

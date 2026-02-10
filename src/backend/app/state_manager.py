@@ -296,6 +296,7 @@ class StateManager:
         # Reset scene-specific state
         state["current_scene"] = new_scene
         state["current_phase"] = "opening"
+        state["turn_count"] = 0
         state["completed_phases"] = []
         state["dialogue_context"] = []
         state["pending_decision"] = None

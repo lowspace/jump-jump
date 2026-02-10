@@ -199,7 +199,7 @@ def test_transition_scene(state_manager):
     assert state["current_scene"] == "scene-1-chentangguan"
     assert state["current_phase"] == "opening"
     assert state["dialogue_context"] == []
-    assert state["turn_count"] == 5  # Turn count should persist
+    assert state["turn_count"] == 0  # Turn count resets on scene transition
 
     # Verify insight quota reset
     assert state["player_insights"]["true_purpose_remaining"] == 2

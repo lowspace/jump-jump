@@ -7,7 +7,11 @@ Jump Jump CLI v5 - COMPLETE GAME
 import asyncio
 import sys
 import argparse
-sys.path.insert(0, '/Users/dnhb/Desktop/GitHub/My_Projects/jump-jump/src')
+from pathlib import Path
+
+# 用相对路径计算 src/ 目录
+_src_dir = str(Path(__file__).resolve().parent.parent)
+sys.path.insert(0, _src_dir)
 
 from rich.console import Console
 from rich.panel import Panel
@@ -19,8 +23,10 @@ from rich.progress import Progress, TaskID
 # 导入模块
 import importlib.util
 
+_app_dir = Path(__file__).resolve().parent.parent / "backend" / "app"
+
 spec_agent = importlib.util.spec_from_file_location(
-    "llm_npc_agent", "/Users/dnhb/Desktop/GitHub/My_Projects/jump-jump/src/backend/app/llm_npc_agent.py"
+    "llm_npc_agent", str(_app_dir / "llm_npc_agent.py")
 )
 llm_module = importlib.util.module_from_spec(spec_agent)
 spec_agent.loader.exec_module(llm_module)
@@ -29,7 +35,7 @@ create_agents_for_scene = llm_module.create_agents_for_scene
 set_llm_config = llm_module.set_llm_config
 
 spec_flow = importlib.util.spec_from_file_location(
-    "game_flow", "/Users/dnhb/Desktop/GitHub/My_Projects/jump-jump/src/backend/app/game_flow.py"
+    "game_flow", str(_app_dir / "game_flow.py")
 )
 flow_module = importlib.util.module_from_spec(spec_flow)
 spec_flow.loader.exec_module(flow_module)
@@ -181,7 +187,9 @@ class JumpJumpGame:
 
         turn_info = f"回合 {self.flow_manager.turn_count}/{self.flow_manager.max_turns_per_scene}"
         info_count = f"信息 {len(state['collected_info'])}"
-        insight_info = f"洞察力 {state['insights_used']}"
+        tp_used = state.get("insights_true_purpose_used", 0)
+        bd_used = state.get("insights_behind_dialogue_used", 0)
+        insight_info = f"洞察 真实目的{tp_used}/2 幕后{bd_used}/2"
 
         grid.add_row(turn_info, info_count, insight_info)
         console.print(grid)
@@ -317,21 +325,32 @@ class JumpJumpGame:
         self.flow_manager.process_turn("observe", {})
 
     async def _use_insight(self):
-        """使用洞察力"""
-        if self.flow_manager.state["insights_used"] >= 3:
-            console.print("[red]本场景洞察力已用完[/red]")
+        """使用洞察力（2x真实目的 + 2x幕后对话）"""
+        state = self.flow_manager.state
+        tp_used = state.get("insights_true_purpose_used", 0)
+        bd_used = state.get("insights_behind_dialogue_used", 0)
+
+        if tp_used >= 2 and bd_used >= 2:
+            console.print("[red]本场景洞察力已全部用完（真实目的 2/2，幕后 2/2）[/red]")
             return
 
         console.print("\n[bold yellow]使用洞察力[/bold yellow]")
-        console.print("[1] 真实目的 - 揭示NPC内心")
-        console.print("[2] 幕后洞察 - 发现隐藏信息")
+        tp_label = f"真实目的 - 揭示NPC隐藏意图 [{'已用完' if tp_used >= 2 else f'剩余{2 - tp_used}次'}]"
+        bd_label = f"幕后对话 - 发现隐藏信息 [{'已用完' if bd_used >= 2 else f'剩余{2 - bd_used}次'}]"
+        console.print(f"[1] {tp_label}")
+        console.print(f"[2] {bd_label}")
 
         choice = Prompt.ask("选择", choices=["1", "2", "q"])
+        if choice == "q":
+            return
 
         # 获取当前场景的NPC列表
         npc_list = self.SCENE_NPCS.get(self.current_scene_id, [])
 
         if choice == "1":
+            if tp_used >= 2:
+                console.print("[red]真实目的洞察已用完[/red]")
+                return
             console.print("\n[bold]NPC真实内心:[/bold]")
             for npc_id, npc_name, _ in npc_list:
                 agent = self.agent_pool.get_agent(npc_id)
@@ -342,12 +361,17 @@ class JumpJumpGame:
                     if agent.state.dialogue_history:
                         last = agent.state.dialogue_history[-1]
                         console.print(f"  最近想法: [dim]{last.content[:60]}...[/dim]")
+            state["insights_true_purpose_used"] = tp_used + 1
+            state["insights_used"] += 1
+            console.print(f"\n[dim]真实目的剩余: {2 - tp_used - 1}/2[/dim]")
 
         elif choice == "2":
+            if bd_used >= 2:
+                console.print("[red]幕后对话洞察已用完[/red]")
+                return
             console.print("\n[magenta]【洞察】[/magenta]")
             console.print("[dim]你静下心来，感知周围的微妙信息...[/dim]")
 
-            # 场景特定的洞察文本
             scene_insights = {
                 "scene-0-wuzhishan": [
                     "你注意到祖母时不时望向山体深处，眼中闪过担忧。",
@@ -378,9 +402,9 @@ class JumpJumpGame:
             insights = scene_insights.get(self.current_scene_id, ["似乎有什么重要的事情即将发生..."])
             import random
             console.print(f"\n[italic]{random.choice(insights)}[/italic]")
-
-        self.flow_manager.state["insights_used"] += 1
-        console.print(f"\n[dim]剩余洞察力: {3 - self.flow_manager.state['insights_used']}[/dim]")
+            state["insights_behind_dialogue_used"] = bd_used + 1
+            state["insights_used"] += 1
+            console.print(f"\n[dim]幕后对话剩余: {2 - bd_used - 1}/2[/dim]")
 
     def _show_collected_info(self):
         """显示已收集信息"""
@@ -479,7 +503,7 @@ class JumpJumpGame:
         next_scene = self.flow_manager.get_next_scene()
 
         if next_scene == "ending":
-            console.print("\n[bold cyan]═══ 游戏结束 ═══[/bold cyan]")
+            self._show_impact_report()
             return False
 
         # 询问是否继续
@@ -503,6 +527,76 @@ class JumpJumpGame:
             return True
         else:
             return False
+
+
+    def _show_impact_report(self):
+        """显示影响力报告"""
+        report = self.flow_manager.generate_impact_report()
+
+        console.print("\n\n")
+        console.print(Panel.fit(
+            "[bold cyan]影响力报告[/bold cyan]\n"
+            "[dim]你的决策在西游世界中产生的涟漪[/dim]",
+            border_style="cyan",
+            padding=(1, 4)
+        ))
+
+        # 统计行
+        stats_grid = Table.grid(expand=True)
+        stats_grid.add_column(justify="center")
+        stats_grid.add_column(justify="center")
+        stats_grid.add_column(justify="center")
+        stats_grid.add_column(justify="center")
+        stats_grid.add_row(
+            f"[bold]{len(report['scenes_visited'])}[/bold] 个场景",
+            f"[bold]{len(report['decisions_detail'])}[/bold] 个决策",
+            f"[bold]{report['collected_info_count']}[/bold] 条信息",
+            f"[bold]{report['insights_total_used']}[/bold] 次洞察",
+        )
+        console.print(stats_grid)
+        console.print()
+
+        # 逐场景涟漪
+        for ripple in report["scene_ripples"]:
+            console.print(Panel(
+                f"[dim]你的选择：[/dim][yellow]{ripple['choice_text']}[/yellow]\n\n"
+                f"[italic]{ripple['ripple']}[/italic]",
+                title=f"[bold]{ripple['scene_name']}[/bold]",
+                border_style="yellow",
+                padding=(1, 2)
+            ))
+
+        # 行为画像
+        profile = report["profile"]
+        profile_table = Table.grid(padding=(0, 2))
+        profile_table.add_column(justify="right", style="dim", min_width=8)
+        profile_table.add_column(min_width=30)
+
+        def _bar(value: float) -> str:
+            filled = int(value * 20)
+            return "[cyan]" + "█" * filled + "[/cyan]" + "[dim]░[/dim]" * (20 - filled) + f" {value:.0%}"
+
+        profile_table.add_row("理想主义", _bar(profile["idealism_index"]))
+        profile_table.add_row("变革参与", _bar(profile["change_participation"]))
+        profile_table.add_row("记忆守护", _bar(profile["memory_guardian_index"]))
+
+        console.print(Panel(
+            f"[bold yellow]{profile['label']}[/bold yellow]",
+            title="[bold]行为画像[/bold]",
+            border_style="magenta",
+            padding=(0, 2)
+        ))
+        console.print(profile_table)
+        console.print()
+
+        # 结尾叙事
+        console.print(Panel(
+            f"[italic]{report['ending_narrative']}[/italic]\n\n"
+            f"[bold cyan]{report['closing']}[/bold cyan]",
+            border_style="cyan",
+            padding=(1, 4)
+        ))
+        console.print()
 
 
 def main():
