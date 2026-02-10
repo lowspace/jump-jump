@@ -77,14 +77,14 @@ class NPCAgent:
         self.config = config or {}
 
         # State
-        self.emotional_state = config.get("initial_state", {}).get("emotional_state", "calm")
-        self.trust = config.get("initial_state", {}).get("trust", 0)
+        self.emotional_state = self.config.get("initial_state", {}).get("emotional_state", "calm")
+        self.trust = self.config.get("initial_state", {}).get("trust", 0)
         self.disposition_toward_player = 0.0
         self.known_info_ids: List[str] = []
         self.relationships: Dict[str, Dict[str, Any]] = {}
 
         # Hidden intent from config
-        self.hidden_intent_config = config.get("hidden_intent", {})
+        self.hidden_intent_config = self.config.get("hidden_intent", {})
 
     async def process_input(
         self,

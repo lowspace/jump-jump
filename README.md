@@ -274,6 +274,7 @@ pytest src/tests/ -v
 3. **Round 3**：NPC 社会 + 弹性 NPC + 双层输出 + 自然交互范式
 4. **审计修复**：硬编码路径、洞察力 2+2 系统、turn_count 重置、Scene 1 决策补全
 5. **影响力报告**：行为画像 + 涟漪叙事 + 结尾总结
+6. **Bug 修复**：NPCAgent 初始化时 config 为 None 导致 AttributeError（44 tests 全部通过）
 
 核心洞察：**"缝隙参与"**——玩家的价值恰恰来自被忽视。
 
